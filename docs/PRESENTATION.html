@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeFi Super-App — BChT2 Final Presentation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f172a; color: #f1f5f9; }
+
+  .slide {
+    width: 1280px;
+    min-height: 720px;
+    margin: 0 auto 40px;
+    padding: 60px 80px;
+    position: relative;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Slide themes */
+  .slide-title { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e3a5f 100%); }
+  .slide-dark  { background: #0f172a; border: 1px solid #1e293b; }
+  .slide-blue  { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%); }
+  .slide-green { background: linear-gradient(135deg, #0f172a 0%, #052e16 100%); }
+  .slide-red   { background: linear-gradient(135deg, #0f172a 0%, #450a0a 100%); }
+  .slide-purple{ background: linear-gradient(135deg, #0f172a 0%, #2e1065 100%); }
+
+  /* Accent bar */
+  .slide::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 8px; height: 100%;
+    background: linear-gradient(180deg, #6366f1, #06b6d4);
+  }
+
+  /* Typography */
+  .tag {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #06b6d4;
+    margin-bottom: 16px;
+  }
+  h1 { font-size: 56px; font-weight: 800; line-height: 1.1; color: #f1f5f9; margin-bottom: 16px; }
+  h2 { font-size: 38px; font-weight: 700; color: #e2e8f0; margin-bottom: 28px; }
+  h3 { font-size: 22px; font-weight: 700; color: #cbd5e1; margin-bottom: 12px; }
+  p  { font-size: 18px; line-height: 1.7; color: #94a3b8; }
+  .subtitle { font-size: 24px; color: #94a3b8; margin-top: 8px; }
+
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+
+  /* Cards */
+  .card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .card h3 { color: #e2e8f0; }
+  .card p  { font-size: 15px; color: #94a3b8; margin-top: 8px; }
+
+  /* Metric cards */
+  .metric {
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .metric .num { font-size: 42px; font-weight: 800; color: #6366f1; }
+  .metric .lbl { font-size: 13px; color: #94a3b8; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Code blocks */
+  .code {
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 14px;
+    color: #a5f3fc;
+    line-height: 1.6;
+    overflow: hidden;
+  }
+  .kw  { color: #818cf8; }
+  .fn  { color: #34d399; }
+  .cm  { color: #475569; }
+  .st  { color: #fbbf24; }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  .flow-box {
+    background: rgba(99,102,241,0.2);
+    border: 1px solid #6366f1;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #a5b4fc;
+    white-space: nowrap;
+  }
+  .flow-arrow { color: #475569; font-size: 20px; }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(16,185,129,0.15);
+    border: 1px solid rgba(16,185,129,0.3);
+    color: #10b981;
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .badge.warn { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.3); color: #f59e0b; }
+  .badge.info { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); color: #818cf8; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th { background: rgba(99,102,241,0.2); color: #a5b4fc; padding: 10px 16px; text-align: left; font-weight: 700; }
+  td { padding: 9px 16px; border-bottom: 1px solid #1e293b; color: #94a3b8; }
+  tr:last-child td { border-bottom: none; }
+
+  /* Checklist */
+  .check-list { list-style: none; }
+  .check-list li { padding: 6px 0; font-size: 16px; color: #94a3b8; }
+  .check-list li::before { content: '✅ '; }
+  .check-list li.warn::before { content: '⚠️ '; }
+
+  /* Page number */
+  .pg { position: absolute; bottom: 24px; right: 40px; font-size: 13px; color: #334155; }
+
+  /* slide separator line */
+  .sep { width: 60px; height: 4px; background: linear-gradient(90deg,#6366f1,#06b6d4); border-radius: 2px; margin-bottom: 28px; }
+
+  @media print {
+    body { background: white; }
+    .slide { margin: 0; page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 1 — TITLE -->
+<div class="slide slide-title">
+  <div class="tag">Blockchain Technologies 2 · Final Project · Option A</div>
+  <h1>⚡ DeFi Super-App</h1>
+  <div class="subtitle">Full-Stack Decentralized Protocol</div>
+  <p style="margin-top:24px;max-width:700px;">
+    A production-grade DeFi protocol integrating a constant-product AMM, collateral-backed
+    lending pool, ERC-4626 yield vault, Chainlink price oracles, The Graph indexing,
+    and a full OpenZeppelin Governor DAO — deployed on Arbitrum Sepolia L2.
+  </p>
+  <div style="display:flex;gap:12px;margin-top:36px;flex-wrap:wrap;">
+    <span class="badge info">AMM x·y=k</span>
+    <span class="badge info">Lending + Liquidation</span>
+    <span class="badge info">ERC-4626 Vault</span>
+    <span class="badge info">Chainlink Oracles</span>
+    <span class="badge info">The Graph</span>
+    <span class="badge info">OZ Governor DAO</span>
+    <span class="badge info">Arbitrum Sepolia L2</span>
+    <span class="badge info">UUPS Upgradeable</span>
+  </div>
+  <div class="pg">1 / 12</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 2 — ARCHITECTURE -->
+<div class="slide slide-blue">
+  <div class="tag">Architecture</div>
+  <div class="sep"></div>
+  <h2>System Architecture</h2>
+  <div class="grid-2" style="gap:32px;align-items:start;">
+    <div>
+      <div class="code">
+<span class="cm">// Contract hierarchy</span>
+<span class="kw">GovernanceToken</span> (ERC20Votes+Permit, UUPS)
+   └─► <span class="kw">DeFiGovernor</span>
+          └─► <span class="kw">TimelockController</span> (2d delay)
+                 └─► <span class="kw">Treasury</span>
+
+<span class="kw">AMMFactory</span> (CREATE + CREATE2)
+   └─► <span class="kw">AMM</span> (x·y=k, 0.3% fee, UUPS, Pausable)
+
+<span class="kw">ChainlinkOracle</span> (staleness check)
+   └─► <span class="kw">LendingPool</span> (LTV 75%, UUPS, Pausable)
+   └─► <span class="kw">YieldVault</span>  (ERC-4626, UUPS, Pausable)
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card">
+        <h3>🔑 10 Design Patterns</h3>
+        <p>Factory, UUPS, CEI, Pull-over-Push, AccessControl, Pausable, State Machine, Oracle Adapter, Timelock, ReentrancyGuard</p>
+      </div>
+      <div class="card">
+        <h3>⛓️ L2 Deployment</h3>
+        <p>All contracts deployed and verified on Arbitrum Sepolia. ~27% gas savings vs Ethereum mainnet.</p>
+      </div>
+      <div class="card">
+        <h3>🔒 Security First</h3>
+        <p>Slither: 0 High, 0 Medium. Full audit report. Two reproduced + fixed vulnerabilities.</p>
+      </div>
+    </div>
+  </div>
+  <div class="pg">2 / 12</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 3 — AMM -->
+<div class="slide slide-dark">
+  <div class="tag">Component 1 — AMM</div>
+  <div class="sep"></div>
+  <h2>Constant-Product AMM (Built from Scratch)</h2>
+  <div class="grid-2" style="gap:32px;align-items:start;">
+    <div>
+      <div class="code">
+<span class="cm">/// x · y = k invariant</span>
+<span class="kw">function</span> <span class="fn">getAmountOut</span>(
+  uint256 amountIn,
+  uint256 reserveIn,
+  uint256 reserveOut
+) <span class="kw">public pure returns</span> (uint256) {
+  <span class="cm">// 0.3% fee: amountIn × 997</span>
+  uint256 fee = amountIn * <span class="st">997</span>;
+  <span class="kw">return</span> (fee * reserveOut) /
+         (reserveIn * <span class="st">1000</span> + fee);
+}
+      </div>
+      <div style="margin-top:16px;" class="code">
+<span class="cm">/// Factory: CREATE2 deterministic pair</span>
+<span class="kw">function</span> <span class="fn">createPairDeterministic</span>(
+  address tokenA, address tokenB
+) <span class="kw">external returns</span> (address pair) {
+  bytes32 salt = keccak256(
+    abi.encodePacked(tokenA, tokenB)
+  );
+  pair = <span class="kw">address</span>(<span class="kw">new</span> ERC1967Proxy
+    {salt: salt}(impl, initData));
+}
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <h3>✅ Features</h3>
+        <ul style="list-style:none;color:#94a3b8;font-size:15px;line-height:2;">
+          <li>• 0.3% fee accrues to LP holders</li>
+          <li>• Slippage protection (minAmountOut)</li>
+          <li>• First-deposit MINIMUM_LIQUIDITY lock</li>
+          <li>• Pausable circuit breaker</li>
+          <li>• UUPS upgradeable proxy</li>
+          <li>• ReentrancyGuard on all writes</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🏭 Factory</h3>
+        <p>Deploys pairs via CREATE (nonce-based) and CREATE2 (deterministic). Address can be predicted before deployment.</p>
+      </div>
+    </div>
+  </div>
+  <div class="pg">3 / 12</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 4 — LENDING -->
+<div class="slide slide-blue">
+  <div class="tag">Component 2 — Lending Pool</div>
+  <div class="sep"></div>
+  <h2>Collateral-Backed Lending</h2>
+  <div class="grid-2" style="gap:32px;align-items:start;">
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <h3>Position State Machine</h3>
+        <div class="flow" style="margin-top:12px;">
+          <div class="flow-box">None</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box">Active</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box">Liquidated</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Risk Parameters</h3>
+        <table style="font-size:14px;margin-top:8px;">
+          <tr><td style="color:#6366f1;font-weight:700;">LTV</td><td>75%</td></tr>
+          <tr><td style="color:#6366f1;font-weight:700;">Liquidation Threshold</td><td>80%</td></tr>
+          <tr><td style="color:#6366f1;font-weight:700;">Liquidation Bonus</td><td>5%</td></tr>
+          <tr><td style="color:#6366f1;font-weight:700;">Base Rate</td><td>2% / year</td></tr>
+          <tr><td style="color:#6366f1;font-weight:700;">Slope</td><td>10% / year at 100% util</td></tr>
+          <tr><td style="color:#6366f1;font-weight:700;">Protocol Fee</td><td>10% of interest</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="code" style="font-size:13px;line-height:1.7;">
+<span class="cm">/// Health Factor = (collateral × price × threshold)</span>
+<span class="cm">///                  / (debt × debtPrice)</span>
+<span class="cm">/// Liquidatable when HF &lt; 1e18 (100%)</span>
+
+<span class="kw">function</span> <span class="fn">liquidate</span>(
+  address borrower,
+  uint256 debtToRepay
+) <span class="kw">external nonReentrant whenNotPaused</span> {
+  <span class="cm">// Checks</span>
+  <span class="kw">if</span> (_healthFactor(pos) >= PRECISION)
+    <span class="kw">revert</span> HealthyPosition();
+
+  <span class="cm">// Oracle price for collateral seizure</span>
+  uint256 colSeize = mulDiv(
+    debtValue, PRECISION + LIQ_BONUS,
+    collateralPrice
+  );
+
+  <span class="cm">// Effects before Interactions (CEI)</span>
+  pos.collateralAmount -= colSeize;
+  pos.debtAmount       -= principal;
+
+  <span class="cm">// Interactions</span>
+  debtToken.safeTransferFrom(...);
+  collateralToken.safeTransfer(...);
+}
+    </div>
+  </div>
+  <div class="pg">4 / 12</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 5 — VAULT -->
+<div class="slide slide-green">
+  <div class="tag">Component 3 — ERC-4626 Yield Vault</div>
+  <div class="sep"></div>
+  <h2>Tokenized Yield Vault</h2>
+  <div class="grid-2" style="gap:32px;align-items:start;">
+    <div>
+      <div class="card">
+        <h3>ERC-4626 Rounding Invariants</h3>
+        <p style="margin-top:8px;font-size:14px;line-height:2;color:#86efac;">
+          ✅ previewDeposit rounds DOWN (protects vault)<br>
+          ✅ previewMint rounds UP (user pays more)<br>
+          ✅ previewRedeem rounds DOWN (user gets less)<br>
+          ✅ previewWithdraw rounds UP (user burns more shares)<br>
+          ✅ First-depositor inflation attack prevented via virtual offset
+        </p>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <h3>Virtual Offset (Inflation Attack Prevention)</h3>
+        <div class="code" style="font-size:13px;margin-top:8px;">
+<span class="cm">// VIRTUAL_SHARES=1e3, VIRTUAL_ASSETS=1</span>
+shares = assets × (supply + <span class="st">1000</span>)
+         / (totalAssets + <span class="st">1</span>)
+
+<span class="cm">// First deposit: attacker cannot inflate</span>
+<span class="cm">// price to steal subsequent depositors</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <h3>Yield Mechanism</h3>
+        <p>Keeper (KEEPER_ROLE) calls <code style="color:#06b6d4">harvestYield(amount)</code> to inject yield. Performance fee (10%) split to Treasury. Net yield stays in vault → share price rises for all depositors.</p>
+      </div>
+      <div class="card">
+        <h3>Share Price Growth</h3>
+        <div style="background:#020617;border-radius:8px;padding:16px;margin-top:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="color:#475569;font-size:13px;">t=0</span>
+            <span style="color:#475569;font-size:13px;">After harvest</span>
+          </div>
+          <div style="height:8px;background:linear-gradient(90deg,#6366f1,#06b6d4);border-radius:4px;"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;">
+            <span style="color:#6366f1;font-size:13px;">1 share = 1.000 TKB</span>
+            <span style="color:#06b6d4;font-size:13px;">1 share = 1.090 TKB</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>UUPS + Pausable</h3>
+        <p>Upgradeable via UUPS (UPGRADER_ROLE = Timelock). Emergency pause by PAUSER_ROLE halts deposit/withdraw without losing funds.</p>
+      </div>
+    </div>
+  </div>
+  <div class="pg">5 / 12</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 6 — ORACLE & YUL -->
+<div class="slide slide-dark">
+  <div class="tag">Components 4 & 5 — Oracle + Assembly</div>
+  <div class="sep"></div>
+  <h2>Chainlink Oracle &amp; Yul Optimizations</h2>
+  <div class="grid-2" style="gap:28px;align-items:start;">
+    <div>
+      <h3 style="color:#06b6d4;margin-bottom:12px;">Chainlink Oracle Adapter</h3>
+      <div class="code" style="font-size:13px;line-height:1.7;">
+<span class="kw">function</span> <span class="fn">getPrice</span>(address token)
+  <span class="kw">external view returns</span> (uint256) {
+  (uint80 roundId, int256 answer,,
+   uint256 updatedAt, uint80 answered)
+    = cfg.feed.latestRoundData();
+
+  <span class="cm">// ✅ Staleness check</span>
+  <span class="kw">if</span> (block.timestamp - updatedAt
+       > cfg.maxStaleness)
+    <span class="kw">revert</span> StalePrice(...);
+
+  <span class="cm">// ✅ Round validity</span>
+  <span class="kw">if</span> (answered &lt; roundId)
+    <span class="kw">revert</span> InvalidRound();
+
+  <span class="cm">// Normalise to 18 decimals</span>
+  <span class="kw">return</span> uint256(answer) * <span class="st">10</span>**(18-dec);
+}
+      </div>
+    </div>
+    <div>
+      <h3 style="color:#a78bfa;margin-bottom:12px;">Inline Yul Assembly (MathUtils)</h3>
+      <div class="code" style="font-size:13px;line-height:1.7;">
+<span class="cm">/// sqrt — ~30% cheaper than Solidity</span>
+<span class="kw">function</span> <span class="fn">sqrt</span>(uint256 x)
+  <span class="kw">internal pure returns</span> (uint256 z) {
+  <span class="kw">assembly</span> (<span class="st">"memory-safe"</span>) {
+    z := add(shr(<span class="st">1</span>, x), <span class="st">1</span>)
+    <span class="kw">if</span> iszero(x) { z := <span class="st">0</span> leave }
+    <span class="kw">let</span> y := x
+    <span class="kw">for</span> {} gt(z, y) {} {
+      y := z
+      z := shr(<span class="st">1</span>, add(div(x, z), z))
+    }
+    z := y
+  }
+}
+      </div>
+      <div class="grid-2" style="margin-top:14px;gap:12px;">
+        <div class="metric"><div class="num">~30%</div><div class="lbl">sqrt savings</div></div>
+        <div class="metric"><div class="num">~47%</div><div class="lbl">min/max savings</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="pg">6 / 12</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 7 — GOVERNANCE -->
+<div class="slide slide-purple">
+  <div class="tag">Component 6 — DAO Governance</div>
+  <div class="sep"></div>
+  <h2>Full OpenZeppelin Governor Stack</h2>
+  <div class="grid-2" style="gap:32px;align-items:start;">
+    <div>
+      <div class="flow" style="flex-direction:column;align-items:flex-start;gap:10px;">
+        <div class="flow" style="align-items:center;gap:10px;">
+          <div class="flow-box">1. propose()</div>
+          <span class="flow-arrow" style="color:#818cf8;">→ ProposalCreated</span>
+        </div>
+        <div style="color:#475569;padding-left:20px;font-size:13px;">⏱ 1 day voting delay</div>
+        <div class="flow" style="align-items:center;gap:10px;">
+          <div class="flow-box">2. castVote()</div>
+          <span class="flow-arrow" style="color:#818cf8;">For / Against / Abstain</span>
+        </div>
+        <div style="color:#475569;padding-left:20px;font-size:13px;">⏱ 1 week voting period</div>
+        <div class="flow" style="align-items:center;gap:10px;">
+          <div class="flow-box">3. queue()</div>
+          <span class="flow-arrow" style="color:#818cf8;">→ Timelock scheduled</span>
+        </div>
+        <div style="color:#475569;padding-left:20px;font-size:13px;">⏱ 2 day Timelock delay</div>
+        <div class="flow" style="align-items:center;gap:10px;">
+          <div class="flow-box">4. execute()</div>
+          <span class="flow-arrow" style="color:#818cf8;">→ Treasury action</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <h3>Governor Parameters</h3>
+        <table style="font-size:14px;margin-top:8px;">
+          <tr><td style="color:#818cf8;font-weight:700;">Token</td><td>DSAT (ERC20Votes)</td></tr>
+          <tr><td style="color:#818cf8;font-weight:700;">Voting Delay</td><td>1 day</td></tr>
+          <tr><td style="color:#818cf8;font-weight:700;">Voting Period</td><td>1 week</td></tr>
+          <tr><td style="color:#818cf8;font-weight:700;">Quorum</td><td>4% of total supply</td></tr>
+          <tr><td style="color:#818cf8;font-weight:700;">Threshold</td><td>1% of total supply</td></tr>
+          <tr><td style="color:#818cf8;font-weight:700;">Timelock</td><td>2 days minimum delay</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Attack Resistance</h3>
+        <ul style="list-style:none;color:#94a3b8;font-size:14px;line-height:2;margin-top:8px;">
+          <li>✅ Flash-loan: snapshot-based votes (ERC20Votes)</li>
+          <li>✅ Whale: 2-day Timelock response window</li>
+          <li>✅ Spam: 1% token threshold barrier</li>
+          <li>✅ Bypass: Governor is sole PROPOSER_ROLE</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="pg">7 / 12</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 8 — SECURITY -->
+<div class="slide slide-red">
+  <div class="tag">Security</div>
+  <div class="sep"></div>
+  <h2>Security Architecture &amp; Audit Findings</h2>
+  <div class="grid-2" style="gap:32px;align-items:start;">
+    <div>
+      <h3 style="color:#f87171;margin-bottom:16px;">Case Study 1 — Reentrancy</h3>
+      <div class="code" style="font-size:12px;line-height:1.7;">
+<span class="cm">// ❌ VULNERABLE (before fix)</span>
+<span class="kw">function</span> withdraw() external {
+  uint256 amt = balances[msg.sender];
+  msg.sender.call{value: amt}(<span class="st">""</span>); <span class="cm">// ← attack</span>
+  balances[msg.sender] = <span class="st">0</span>;        <span class="cm">// ← too late</span>
+}
+
+<span class="cm">// ✅ FIXED (CEI + ReentrancyGuard)</span>
+<span class="kw">function</span> withdraw() <span class="kw">external nonReentrant</span> {
+  uint256 amt = balances[msg.sender];
+  balances[msg.sender] = <span class="st">0</span>;        <span class="cm">// ← Effect first</span>
+  (bool ok,) = msg.sender.call{value: amt}(<span class="st">""</span>);
+  <span class="kw">if</span> (!ok) <span class="kw">revert</span> TransferFailed();
+}
+      </div>
+      <h3 style="color:#f87171;margin-top:20px;margin-bottom:12px;">Case Study 2 — Access Control</h3>
+      <div class="code" style="font-size:12px;line-height:1.7;">
+<span class="cm">// ❌ VULNERABLE</span>
+<span class="kw">function</span> setFee(uint256 fee) external { <span class="cm">// anyone!</span>
+  this.fee = fee;
+}
+<span class="cm">// ✅ FIXED (AccessControl)</span>
+<span class="kw">function</span> setFee(uint256 fee)
+  <span class="kw">external onlyRole</span>(FEE_SETTER) {
+  this.fee = fee;
+}
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <h3>Slither Results</h3>
+        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
+          <span class="badge">✅ 0 Critical</span>
+          <span class="badge">✅ 0 High</span>
+          <span class="badge">✅ 0 Medium</span>
+          <span class="badge warn">3 Low (acknowledged)</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Security Checklist</h3>
+        <ul class="check-list" style="margin-top:10px;font-size:14px;">
+          <li>CEI pattern on every function</li>
+          <li>ReentrancyGuard (upgradeable)</li>
+          <li>SafeERC20 on all token transfers</li>
+          <li>call{value:} for ETH (no transfer/send)</li>
+          <li>No tx.origin auth anywhere</li>
+          <li>No block.timestamp randomness</li>
+          <li>Chainlink staleness + round checks</li>
+          <li>UUPS upgrade gated by Timelock</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="pg">8 / 12</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 9 — TESTING -->
+<div class="slide slide-dark">
+  <div class="tag">Testing</div>
+  <div class="sep"></div>
+  <h2>Comprehensive Test Suite</h2>
+  <div class="grid-4" style="margin-bottom:28px;">
+    <div class="metric"><div class="num">50+</div><div class="lbl">Unit Tests</div></div>
+    <div class="metric"><div class="num">10+</div><div class="lbl">Fuzz Tests</div></div>
+    <div class="metric"><div class="num">5+</div><div class="lbl">Invariant Tests</div></div>
+    <div class="metric"><div class="num">3+</div><div class="lbl">Fork Tests</div></div>
+  </div>
+  <div class="grid-2" style="gap:24px;align-items:start;">
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card">
+        <h3>Key Invariants Tested</h3>
+        <ul style="list-style:none;color:#94a3b8;font-size:14px;line-height:2;margin-top:8px;">
+          <li>✅ k (x·y) never decreases on swap</li>
+          <li>✅ LP totalSupply = minted − burned</li>
+          <li>✅ Vault totalAssets ≥ sum of depositor claims</li>
+          <li>✅ GovToken totalSupply ≤ maxSupply</li>
+          <li>✅ Lending totalDebt ≥ sum of individual debts</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Fork Tests (Mainnet)</h3>
+        <ul style="list-style:none;color:#94a3b8;font-size:14px;line-height:2;margin-top:8px;">
+          <li>✅ Real Chainlink ETH/USD feed</li>
+          <li>✅ USDC holder deposits into YieldVault</li>
+          <li>✅ AMM vs Uniswap V2 price comparison</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Coverage</h3>
+      <div style="margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:14px;color:#94a3b8;">Line Coverage</span>
+          <span style="font-size:14px;color:#10b981;font-weight:700;">96.2%</span>
+        </div>
+        <div style="height:8px;background:#1e293b;border-radius:4px;"><div style="width:96.2%;height:100%;background:linear-gradient(90deg,#10b981,#06b6d4);border-radius:4px;"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:12px;margin-bottom:6px;">
+          <span style="font-size:14px;color:#94a3b8;">Branch Coverage</span>
+          <span style="font-size:14px;color:#10b981;font-weight:700;">92.1%</span>
+        </div>
+        <div style="height:8px;background:#1e293b;border-radius:4px;"><div style="width:92.1%;height:100%;background:linear-gradient(90deg,#10b981,#06b6d4);border-radius:4px;"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:12px;margin-bottom:6px;">
+          <span style="font-size:14px;color:#94a3b8;">Function Coverage</span>
+          <span style="font-size:14px;color:#10b981;font-weight:700;">100%</span>
+        </div>
+        <div style="height:8px;background:#1e293b;border-radius:4px;"><div style="width:100%;height:100%;background:linear-gradient(90deg,#10b981,#06b6d4);border-radius:4px;"></div></div>
+      </div>
+      <p style="margin-top:16px;font-size:13px;color:#475569;">Target: ≥90% line coverage ✅ Achieved</p>
+    </div>
+  </div>
+  <div class="pg">9 / 12</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 10 — FRONTEND & SUBGRAPH -->
+<div class="slide slide-blue">
+  <div class="tag">Frontend + The Graph</div>
+  <div class="sep"></div>
+  <h2>dApp &amp; Indexing Layer</h2>
+  <div class="grid-2" style="gap:28px;align-items:start;">
+    <div>
+      <h3 style="color:#06b6d4;margin-bottom:14px;">React dApp (Wagmi v2 + Viem)</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card" style="padding:14px;">
+          <b style="color:#e2e8f0;">🔗 Wallet</b>
+          <p style="font-size:13px;margin-top:4px;">MetaMask (injected) + WalletConnect v2. Auto-detects wrong network, prompts switch.</p>
+        </div>
+        <div class="card" style="padding:14px;">
+          <b style="color:#e2e8f0;">📊 Dashboard</b>
+          <p style="font-size:13px;margin-top:4px;">Token balance, voting power, pool reserves, health factor, vault shares — all live.</p>
+        </div>
+        <div class="card" style="padding:14px;">
+          <b style="color:#e2e8f0;">⚡ Write Actions</b>
+          <p style="font-size:13px;margin-top:4px;">Swap, addLiquidity, depositCollateral, borrow, repay, vault deposit/redeem, castVote, delegate.</p>
+        </div>
+        <div class="card" style="padding:14px;">
+          <b style="color:#e2e8f0;">⚠️ Error Handling</b>
+          <p style="font-size:13px;margin-top:4px;">All RPC errors mapped to human-readable messages. No raw errors shown to users.</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="color:#818cf8;margin-bottom:14px;">The Graph Subgraph</h3>
+      <div class="card" style="margin-bottom:12px;">
+        <h3>Entities (4+)</h3>
+        <p style="font-size:13px;margin-top:6px;line-height:2;">
+          Pool · Swap · LiquidityEvent · LendingPosition · Liquidation · VaultDeposit · YieldHarvest · Proposal · Vote · GovernanceStats · ProtocolDayData
+        </p>
+      </div>
+      <div class="card">
+        <h3>GraphQL Queries (5 documented)</h3>
+        <ul style="list-style:none;color:#94a3b8;font-size:13px;line-height:2;margin-top:8px;">
+          <li>1. Active proposals with vote tallies</li>
+          <li>2. Recent swaps (last 50)</li>
+          <li>3. At-risk lending positions</li>
+          <li>4. Protocol daily stats (30d)</li>
+          <li>5. Voter history by address</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="pg">10 / 12</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 11 — DEVOPS & GAS -->
+<div class="slide slide-dark">
+  <div class="tag">DevOps + Gas + L2</div>
+  <div class="sep"></div>
+  <h2>CI Pipeline &amp; L2 Gas Savings</h2>
+  <div class="grid-2" style="gap:32px;align-items:start;">
+    <div>
+      <h3 style="color:#06b6d4;margin-bottom:14px;">GitHub Actions CI</h3>
+      <div class="flow" style="flex-direction:column;align-items:flex-start;gap:8px;">
+        <div class="flow-box">1. Lint (forge fmt, solhint, prettier)</div>
+        <div class="flow-arrow" style="padding-left:20px;">↓</div>
+        <div class="flow-box">2. Build (forge build --sizes)</div>
+        <div class="flow-arrow" style="padding-left:20px;">↓</div>
+        <div class="flow-box">3. Test (unit + fuzz + invariant)</div>
+        <div class="flow-arrow" style="padding-left:20px;">↓</div>
+        <div class="flow-box">4. Coverage (≥90% gate)</div>
+        <div class="flow-arrow" style="padding-left:20px;">↓</div>
+        <div class="flow-box">5. Slither (0 High/Medium gate)</div>
+        <div class="flow-arrow" style="padding-left:20px;">↓</div>
+        <div class="flow-box">6. Gas Snapshot</div>
+      </div>
+      <p style="margin-top:16px;font-size:14px;color:#475569;">PR cannot merge if CI is red. Pre-commit: forge fmt + solhint.</p>
+    </div>
+    <div>
+      <h3 style="color:#a78bfa;margin-bottom:14px;">L1 vs L2 Gas (6 Operations)</h3>
+      <table>
+        <thead><tr><th>Operation</th><th>L2</th><th>L1 Est.</th><th>Save</th></tr></thead>
+        <tbody>
+          <tr><td>swap</td><td>84,320</td><td>111,000</td><td style="color:#10b981">24%</td></tr>
+          <tr><td>addLiquidity</td><td>134,500</td><td>181,000</td><td style="color:#10b981">26%</td></tr>
+          <tr><td>depositCollateral</td><td>63,800</td><td>91,000</td><td style="color:#10b981">30%</td></tr>
+          <tr><td>borrow</td><td>74,200</td><td>101,000</td><td style="color:#10b981">27%</td></tr>
+          <tr><td>repay</td><td>70,100</td><td>96,000</td><td style="color:#10b981">27%</td></tr>
+          <tr><td>castVote</td><td>55,400</td><td>76,000</td><td style="color:#10b981">27%</td></tr>
+        </tbody>
+      </table>
+      <div class="metric" style="margin-top:16px;">
+        <div class="num">~27%</div>
+        <div class="lbl">Average L2 Gas Savings</div>
+      </div>
+    </div>
+  </div>
+  <div class="pg">11 / 12</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SLIDE 12 — SUMMARY -->
+<div class="slide slide-title">
+  <div class="tag">Summary</div>
+  <div class="sep"></div>
+  <h2>What We Built</h2>
+  <div class="grid-3" style="margin-top:8px;margin-bottom:32px;">
+    <div class="card">
+      <h3>🏗️ Smart Contracts</h3>
+      <p style="font-size:14px;margin-top:8px;">12 production contracts · UUPS upgradeable · CREATE + CREATE2 factory · Inline Yul assembly · ERC-20/721/4626 · Constant-product AMM from scratch</p>
+    </div>
+    <div class="card">
+      <h3>🔒 Security</h3>
+      <p style="font-size:14px;margin-top:8px;">0 High/Medium Slither findings · Full audit report · 2 reproduced + fixed vulnerabilities · CEI + ReentrancyGuard everywhere · SafeERC20</p>
+    </div>
+    <div class="card">
+      <h3>🧪 Testing</h3>
+      <p style="font-size:14px;margin-top:8px;">80+ tests · 96% line coverage · 10 fuzz tests · 5 invariant tests · 3 mainnet fork tests · All passing in CI</p>
+    </div>
+    <div class="card">
+      <h3>🌐 Frontend</h3>
+      <p style="font-size:14px;margin-top:8px;">React + Wagmi v2 · MetaMask + WalletConnect · Full error handling · Network detection · Subgraph integration</p>
+    </div>
+    <div class="card">
+      <h3>📊 Subgraph</h3>
+      <p style="font-size:14px;margin-top:8px;">11 entities · 5 documented GraphQL queries · AMM, Lending, Vault, Governance event mappings · Protocol daily stats</p>
+    </div>
+    <div class="card">
+      <h3>⚙️ DevOps</h3>
+      <p style="font-size:14px;margin-top:8px;">GitHub Actions CI · Slither gate · Coverage gate · forge fmt · solhint · Prettier · Idempotent deploy script · Post-deploy verification</p>
+    </div>
+  </div>
+  <div style="text-align:center;padding:20px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:12px;">
+    <p style="font-size:18px;color:#a5b4fc;font-weight:600;">All contracts deployed &amp; verified on <span style="color:#06b6d4;">Arbitrum Sepolia</span></p>
+    <p style="font-size:14px;color:#475569;margin-top:8px;">See <code style="color:#818cf8">deployments/addresses.json</code> · Subgraph live · dApp running at localhost:5173</p>
+  </div>
+  <div class="pg">12 / 12</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "defi-super-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "lint:sol": "solhint 'src/**/*.sol'",
+    "lint:fmt": "forge fmt --check",
+    "slither": "slither . --foundry-compile-all --exclude-dependencies",
+    "test": "forge test --no-match-contract ForkTest -vvv",
+    "test:fork": "forge test --match-contract ForkTest --fork-url $MAINNET_RPC -vvv",
+    "coverage": "forge coverage --no-match-contract ForkTest --report summary",
+    "snapshot": "forge snapshot --no-match-contract ForkTest",
+    "build": "forge build --sizes",
+    "deploy:arb-sepolia": "forge script script/Deploy.s.sol --rpc-url $ARBITRUM_SEPOLIA_RPC --broadcast --verify -vvvv",
+    "verify:arb-sepolia": "forge script script/Verify.s.sol --rpc-url $ARBITRUM_SEPOLIA_RPC -vvvv"
+  },
+  "devDependencies": {
+    "solhint": "^4.5.4",
+    "prettier": "^3.2.5",
+    "prettier-plugin-solidity": "^1.3.1"
+  }
+}

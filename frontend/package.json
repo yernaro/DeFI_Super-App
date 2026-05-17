@@ -1,0 +1,32 @@
+{
+  "name": "defi-super-app-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "prettier --check 'src/**/*.{ts,tsx,css}'"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.28.0",
+    "ethers": "^6.11.1",
+    "graphql": "^16.8.1",
+    "graphql-request": "^6.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.3",
+    "wagmi": "^2.5.7",
+    "@wagmi/connectors": "^4.3.3",
+    "@wagmi/core": "^2.8.0",
+    "viem": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1",
+    "prettier": "^3.2.5",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0"
+  }
+}

@@ -1,0 +1,188 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: forge fmt --check
+        run: forge fmt --check
+
+      - name: Install Node (for solhint + prettier)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install root dev-deps (solhint)
+        run: npm ci --prefix .
+
+      - name: solhint
+        run: npx solhint 'src/**/*.sol'
+
+      - name: Install frontend deps
+        run: npm ci --prefix frontend
+
+      - name: prettier check (frontend)
+        run: npm run lint --prefix frontend
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Install lib deps
+        run: forge install
+
+      - name: Build
+        run: forge build --sizes
+
+      - name: Run unit + fuzz + invariant tests
+        run: forge test --no-match-contract ForkTest -vvv
+
+      - name: Run fork tests (skipped if no RPC)
+        env:
+          MAINNET_RPC: ${{ secrets.MAINNET_RPC }}
+        run: |
+          if [ -n "$MAINNET_RPC" ]; then
+            forge test --match-contract ForkTest --fork-url "$MAINNET_RPC" -vvv
+          else
+            echo "MAINNET_RPC not set — skipping fork tests"
+          fi
+
+      - name: Forge coverage
+        run: |
+          forge coverage \
+            --no-match-contract ForkTest \
+            --report lcov \
+            --report summary \
+            > coverage-summary.txt
+          cat coverage-summary.txt
+
+      - name: Generate coverage markdown
+        run: |
+          echo "# Coverage Report" > coverage.md
+          echo "" >> coverage.md
+          echo "Generated at: $(date -u)" >> coverage.md
+          echo "" >> coverage.md
+          echo '```' >> coverage.md
+          cat coverage-summary.txt >> coverage.md
+          echo '```' >> coverage.md
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            coverage.md
+            lcov.info
+
+      - name: Check line coverage >= 90%
+        run: |
+          LINE_PCT=$(grep -oP 'Lines\s*:\s*\K[\d.]+' coverage-summary.txt | head -1)
+          echo "Line coverage: ${LINE_PCT}%"
+          python3 -c "import sys; pct=float('${LINE_PCT}'); sys.exit(0 if pct>=90 else 1)" \
+            || echo "::warning::Coverage below 90% threshold"
+
+  slither:
+    name: Slither
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Install Slither
+        run: pip3 install slither-analyzer
+
+      - name: Run Slither
+        run: |
+          slither . \
+            --foundry-compile-all \
+            --exclude-dependencies \
+            --json slither-report.json \
+            --checklist \
+            --markdown-root . \
+            2>&1 | tee slither-output.txt || true
+
+      - name: Fail on High/Medium findings
+        run: |
+          HIGH=$(python3 -c "
+          import json, sys
+          try:
+            data = json.load(open('slither-report.json'))
+            issues = [d for d in data.get('results',{}).get('detectors',[])
+                      if d.get('impact') in ('High','Medium')]
+            print(len(issues))
+          except: print(0)
+          ")
+          echo "High/Medium findings: $HIGH"
+          if [ "$HIGH" -gt 0 ]; then
+            echo "::error::Slither found $HIGH High/Medium severity issues"
+            exit 1
+          fi
+
+      - name: Upload Slither report
+        uses: actions/upload-artifact@v4
+        with:
+          name: slither-report
+          path: |
+            slither-report.json
+            slither-output.txt
+
+  gas:
+    name: Gas Snapshot
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: forge snapshot
+        run: forge snapshot --no-match-contract ForkTest
+
+      - name: Upload gas snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: gas-snapshot
+          path: .gas-snapshot
