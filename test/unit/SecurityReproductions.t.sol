@@ -253,7 +253,6 @@ contract SecurityReproductionTest is Test {
         address newFee = makeAddr("newFeeManager");
         FixedProtocol proto = new FixedProtocol(admin);
 
-        // Grant FEE_SETTER to newFee
         vm.prank(admin);
         proto.grantRole(proto.FEE_SETTER(), newFee);
 
