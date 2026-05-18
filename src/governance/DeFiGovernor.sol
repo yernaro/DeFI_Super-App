@@ -8,14 +8,6 @@ import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
 
-/// @title DeFiGovernor
-/// @notice Full OpenZeppelin Governor stack:
-///         - ERC20Votes-based voting power (GovernanceToken).
-///         - 1-day voting delay, 1-week voting period.
-///         - 4 % quorum fraction, 1 % proposal threshold.
-///         - TimelockController with 2-day minimum delay.
-///         - Full propose→vote→queue→execute lifecycle.
-/// @dev    Design pattern: Timelock (for governance actions).
 contract DeFiGovernor is
     Governor,
     GovernorSettings,
@@ -36,16 +28,10 @@ contract DeFiGovernor is
         GovernorTimelockControl(_timelock)
     {}
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Proposal threshold: 1 % of total supply
-    // ─────────────────────────────────────────────────────────────────────────
     function proposalThreshold() public view override(Governor, GovernorSettings) returns (uint256) {
         return token().getPastTotalSupply(block.number - 1) / 100;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Required overrides (diamond inheritance)
-    // ─────────────────────────────────────────────────────────────────────────
     function votingDelay() public view override(Governor, GovernorSettings) returns (uint256) {
         return super.votingDelay();
     }
