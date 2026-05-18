@@ -148,7 +148,7 @@ Target: ≥ 90% line coverage across `src/`.
 
 ```bash
 pip3 install slither-analyzer
-slither . --foundry-compile-all --exclude-dependencies
+slither src --foundry-compile-all --exclude-dependencies
 ```
 
 Expected: **0 High, 0 Medium** findings.

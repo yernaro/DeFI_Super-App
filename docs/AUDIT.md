@@ -245,7 +245,7 @@ All Low and Informational findings are accounted for in §5 or in the table belo
 ## Appendix A — Slither Command
 
 ```bash
-slither . \
+slither src \
   --foundry-compile-all \
   --exclude-dependencies \
   --json slither-report.json \

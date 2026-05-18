@@ -5,7 +5,7 @@
   "scripts": {
     "lint:sol": "solhint 'src/**/*.sol'",
     "lint:fmt": "forge fmt --check",
-    "slither": "slither . --foundry-compile-all --exclude-dependencies",
+    "slither": "slither src --foundry-compile-all --exclude-dependencies",
     "test": "forge test --no-match-contract ForkTest -vvv",
     "test:fork": "forge test --match-contract ForkTest --fork-url $MAINNET_RPC -vvv",
     "coverage": "forge coverage --skip script --no-match-contract ForkTest --no-match-coverage \"^(script|test)/\" --report summary",

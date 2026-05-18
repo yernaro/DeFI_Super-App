@@ -34,9 +34,6 @@ import {
 
 const queryClient = new QueryClient();
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Proposal state label helpers
-// ─────────────────────────────────────────────────────────────────────────────
 const STATE_COLORS: Record<string, string> = {
   Pending: "#f59e0b",
   Active: "#10b981",
@@ -68,9 +65,6 @@ function shortAddr(addr: string) {
   return addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : "—";
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Error banner
-// ─────────────────────────────────────────────────────────────────────────────
 function ErrorBanner({ msg, onClose }: { msg: string; onClose: () => void }) {
   return (
     <div
@@ -101,9 +95,6 @@ function ErrorBanner({ msg, onClose }: { msg: string; onClose: () => void }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Network guard banner
-// ─────────────────────────────────────────────────────────────────────────────
 function NetworkBanner() {
   const { isSupported, promptSwitch } = useNetworkGuard();
   const chainId = useChainId();
@@ -143,9 +134,6 @@ function NetworkBanner() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Wallet bar
-// ─────────────────────────────────────────────────────────────────────────────
 function WalletBar() {
   const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
@@ -183,9 +171,6 @@ function WalletBar() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Dashboard overview cards
-// ─────────────────────────────────────────────────────────────────────────────
 function DashboardPanel() {
   const { address } = useAccount();
   const gov = useGovTokenData();
@@ -290,9 +275,7 @@ function DashboardPanel() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Swap panel
-// ─────────────────────────────────────────────────────────────────────────────
+
 function SwapPanel() {
   const { address } = useAccount();
   const pool = usePoolData();
@@ -397,9 +380,7 @@ function SwapPanel() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Lending panel
-// ─────────────────────────────────────────────────────────────────────────────
+
 function LendingPanel() {
   const { depositCollateral, borrow, repay, pending, error } = useLendingTx();
   const lending = useLendingPosition();
@@ -513,9 +494,7 @@ function LendingPanel() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Vault panel
-// ─────────────────────────────────────────────────────────────────────────────
+
 function VaultPanel() {
   const { deposit, redeem, pending, error } = useVaultTx();
   const vault = useVaultData();
@@ -583,9 +562,7 @@ function VaultPanel() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Governance panel — reads from The Graph
-// ─────────────────────────────────────────────────────────────────────────────
+
 function GovernancePanel() {
   const { data, isLoading } = useProposals();
   const { castVote, delegate, pending, error } = useGovernanceTx();
@@ -725,9 +702,7 @@ function GovernancePanel() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Recent swaps panel — reads from The Graph
-// ─────────────────────────────────────────────────────────────────────────────
+
 function RecentSwapsPanel() {
   const { data, isLoading } = useRecentSwaps();
   return (
@@ -783,9 +758,7 @@ function RecentSwapsPanel() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared UI primitives
-// ─────────────────────────────────────────────────────────────────────────────
+
 function Card({
   title,
   children,
@@ -864,9 +837,7 @@ const inputStyle: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tab navigation
-// ─────────────────────────────────────────────────────────────────────────────
+
 const TABS = [
   "Dashboard",
   "Swap",
@@ -960,9 +931,7 @@ function App() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Analytics panel — from subgraph
-// ─────────────────────────────────────────────────────────────────────────────
+
 function AnalyticsPanel() {
   const { data, isLoading } = useProtocolStats();
   const recentSwaps = useRecentSwaps();
@@ -1035,9 +1004,7 @@ function AnalyticsPanel() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Root
-// ─────────────────────────────────────────────────────────────────────────────
+
 export default function Root() {
   return (
     <WagmiProvider config={config}>

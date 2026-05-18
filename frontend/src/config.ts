@@ -14,8 +14,8 @@ export const SUPPORTED_CHAINS = [
 export const config = createConfig({
   chains: SUPPORTED_CHAINS,
   connectors: [
-    injected(), // MetaMask + any injected wallet
-    walletConnect({ projectId }), // WalletConnect v2
+    injected(), 
+    walletConnect({ projectId }), 
   ],
   transports: {
     [arbitrumSepolia.id]: http(import.meta.env.VITE_ARBITRUM_SEPOLIA_RPC || ""),
@@ -55,7 +55,7 @@ export const DEPLOYMENT = {
       "0x0000000000000000000000000000000000000009",
     subgraph:
       import.meta.env.VITE_ARB_SUBGRAPH_URL ||
-      "https://api.studio.thegraph.com/query/xxxxx/defi-super-app/version/latest",
+      "https:
   },
 } as const;
 
