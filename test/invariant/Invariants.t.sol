@@ -3,16 +3,12 @@ pragma solidity 0.8.24;
 
 import "../unit/BaseTest.t.sol";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Handler — drives random calls into the AMM
-// ─────────────────────────────────────────────────────────────────────────────
 contract AMMHandler is BaseTest {
     uint256 public ghost_totalLPMinted;
     uint256 public ghost_totalLPBurned;
 
-    function setUp() public override {
+    function setUp() public virtual override {
         super.setUp();
-        // initial liquidity so k starts non-zero
         _addLiquidity(alice, 1000e18, 2000e18);
         ghost_totalLPMinted = amm.lpToken().totalSupply();
     }
@@ -55,9 +51,6 @@ contract AMMHandler is BaseTest {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Invariant: k never decreases
-// ─────────────────────────────────────────────────────────────────────────────
 contract Invariant_AMM_KNeverDecreases is AMMHandler {
     uint256 private _kSnapshot;
 
@@ -68,7 +61,6 @@ contract Invariant_AMM_KNeverDecreases is AMMHandler {
         targetContract(address(this));
     }
 
-    /// @notice After every action, k ≥ initial k.
     function invariant_k_neverDecreases() public view {
         (uint112 rA, uint112 rB,) = amm.getReserves();
         uint256 kNow = uint256(rA) * uint256(rB);
@@ -76,9 +68,6 @@ contract Invariant_AMM_KNeverDecreases is AMMHandler {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Invariant: LP total supply = minted - burned
-// ─────────────────────────────────────────────────────────────────────────────
 contract Invariant_LP_TotalSupply is AMMHandler {
     function setUp() public override {
         super.setUp();
@@ -86,16 +75,12 @@ contract Invariant_LP_TotalSupply is AMMHandler {
     }
 
     function invariant_lpTotalSupply_conservation() public view {
-        uint256 locked = amm.MINIMUM_LIQUIDITY(); // locked at address(1)
         uint256 supply = amm.lpToken().totalSupply();
-        // supply = ghost_totalLPMinted + locked - ghost_totalLPBurned
-        assertEq(supply, ghost_totalLPMinted + locked - ghost_totalLPBurned);
+
+        assertEq(supply, ghost_totalLPMinted - ghost_totalLPBurned);
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Invariant: vault totalAssets ≥ sum of all depositors' claims
-// ─────────────────────────────────────────────────────────────────────────────
 contract Invariant_Vault_Solvency is BaseTest {
     address[] private depositors;
     uint256 private totalDeposited;
@@ -129,9 +114,6 @@ contract Invariant_Vault_Solvency is BaseTest {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Invariant: governance token supply ≤ maxSupply
-// ─────────────────────────────────────────────────────────────────────────────
 contract Invariant_GovToken_SupplyCap is BaseTest {
     function setUp() public override {
         super.setUp();
@@ -151,9 +133,6 @@ contract Invariant_GovToken_SupplyCap is BaseTest {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Invariant: lending totalDebt ≥ sum of individual debts
-// ─────────────────────────────────────────────────────────────────────────────
 contract Invariant_Lending_DebtAccounting is BaseTest {
     address[] private borrowers;
 
@@ -163,7 +142,6 @@ contract Invariant_Lending_DebtAccounting is BaseTest {
         borrowers.push(bob);
         borrowers.push(carol);
 
-        // Supply debt token liquidity
         _supplyDebt(alice, 20_000e18);
 
         targetContract(address(this));
@@ -178,7 +156,6 @@ contract Invariant_Lending_DebtAccounting is BaseTest {
         vm.startPrank(user);
         tokenA.approve(address(lending), colAmt);
         lending.depositCollateral(colAmt);
-        // attempt borrow, may revert on LTV — that's fine
         try lending.borrow(borrowAmt) {} catch {}
         vm.stopPrank();
     }

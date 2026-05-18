@@ -3,11 +3,7 @@ pragma solidity 0.8.24;
 
 import "./BaseTest.t.sol";
 
-/// @notice Unit tests for the AMM contract. Target: ≥ 50 unit tests total across suite.
 contract AMMTest is BaseTest {
-    // ─────────────────────────────────────────────────────────────────────────
-    // Initialization
-    // ─────────────────────────────────────────────────────────────────────────
     function test_ammInitialization() public view {
         assertEq(address(amm.tokenA()), address(tokenA));
         assertEq(address(amm.tokenB()), address(tokenB));
@@ -19,9 +15,6 @@ contract AMMTest is BaseTest {
         assertEq(amm.FEE_DENOMINATOR(), 1000);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Add Liquidity
-    // ─────────────────────────────────────────────────────────────────────────
     function test_addLiquidity_firstDeposit() public {
         uint256 amtA = 1000e18;
         uint256 amtB = 2000e18;
@@ -30,7 +23,6 @@ contract AMMTest is BaseTest {
 
         assertEq(a, amtA);
         assertEq(b, amtB);
-        // LP = sqrt(1000e18 * 2000e18) - MINIMUM_LIQUIDITY
         uint256 expectedLP = MathUtils.sqrt(amtA * amtB) - amm.MINIMUM_LIQUIDITY();
         assertEq(lp, expectedLP);
         assertEq(amm.lpToken().balanceOf(alice), expectedLP);
@@ -39,7 +31,6 @@ contract AMMTest is BaseTest {
     function test_addLiquidity_secondDeposit_proportional() public {
         _addLiquidity(alice, 1000e18, 2000e18);
 
-        // Bob adds exactly proportional — should get proportional LP
         vm.prank(bob);
         (uint256 a, uint256 b, uint256 lp) = amm.addLiquidity(500e18, 1000e18, 0, 0);
         assertEq(a, 500e18);
@@ -50,10 +41,9 @@ contract AMMTest is BaseTest {
     function test_addLiquidity_adjustsToReserveRatio() public {
         _addLiquidity(alice, 1000e18, 2000e18);
 
-        // Bob provides excess tokenB — only proportional amount used
         vm.prank(bob);
         (, uint256 bUsed,) = amm.addLiquidity(500e18, 9999e18, 0, 0);
-        assertEq(bUsed, 1000e18); // only 1000 used (proportional to 500 tokenA)
+        assertEq(bUsed, 1000e18); 
     }
 
     function test_addLiquidity_reverts_onZeroAmount() public {
@@ -65,7 +55,6 @@ contract AMMTest is BaseTest {
     function test_addLiquidity_reverts_onSlippage() public {
         _addLiquidity(alice, 1000e18, 2000e18);
 
-        // Bob sets minAmountB too high
         vm.prank(bob);
         vm.expectRevert(abi.encodeWithSelector(AMM.SlippageExceeded.selector, 1000e18, 9000e18));
         amm.addLiquidity(500e18, 9000e18, 0, 9000e18);
@@ -80,9 +69,6 @@ contract AMMTest is BaseTest {
         amm.addLiquidity(1000e18, 2000e18, 0, 0);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Remove Liquidity
-    // ─────────────────────────────────────────────────────────────────────────
     function test_removeLiquidity_receivesProportional() public {
         uint256 lp = _addLiquidity(alice, 1000e18, 2000e18);
         uint256 balABefore = tokenA.balanceOf(alice);
@@ -115,9 +101,6 @@ contract AMMTest is BaseTest {
         vm.stopPrank();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Swap
-    // ─────────────────────────────────────────────────────────────────────────
     function test_swap_aToBCorrectOutput() public {
         _addLiquidity(alice, 1000e18, 2000e18);
 
@@ -158,7 +141,7 @@ contract AMMTest is BaseTest {
         _addLiquidity(alice, 1000e18, 2000e18);
         vm.prank(bob);
         vm.expectRevert();
-        amm.swap(10e18, 999e18, true, bob); // minAmountOut too high
+        amm.swap(10e18, 999e18, true, bob); 
     }
 
     function test_swap_reverts_onZeroRecipient() public {
@@ -202,9 +185,6 @@ contract AMMTest is BaseTest {
         assertGe(k1, k0);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // getAmountOut / getAmountIn
-    // ─────────────────────────────────────────────────────────────────────────
     function test_getAmountOut_reverts_onZeroInput() public {
         vm.expectRevert(AMM.InsufficientInputAmount.selector);
         amm.getAmountOut(0, 1000e18, 2000e18);
@@ -229,9 +209,6 @@ contract AMMTest is BaseTest {
         assertGe(actualOut, desiredOut);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Pause / Unpause
-    // ─────────────────────────────────────────────────────────────────────────
     function test_pause_onlyPauserRole() public {
         vm.prank(alice);
         vm.expectRevert();
@@ -248,9 +225,6 @@ contract AMMTest is BaseTest {
         assertFalse(amm.paused());
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Factory
-    // ─────────────────────────────────────────────────────────────────────────
     function test_factory_createPair_registers() public view {
         address pair = factory.getPair(address(tokenA), address(tokenB));
         assertEq(pair, address(amm));
@@ -277,9 +251,6 @@ contract AMMTest is BaseTest {
         factory.createPair(address(tokenA), address(tokenA));
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // MathUtils
-    // ─────────────────────────────────────────────────────────────────────────
     function test_sqrt_matchesReference() public pure {
         uint256[] memory inputs = new uint256[](5);
         inputs[0] = 0;

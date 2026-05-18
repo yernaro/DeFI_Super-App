@@ -6,13 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CASE STUDY 1: REENTRANCY
-// Demonstrates the classic reentrancy vulnerability in a withdraw function,
-// then shows the fixed version.
-// ─────────────────────────────────────────────────────────────────────────────
 
-/// @notice VULNERABLE vault — violates CEI: state updated AFTER external call.
 contract VulnerableVault {
     mapping(address => uint256) public balances;
 
@@ -20,18 +14,15 @@ contract VulnerableVault {
         balances[msg.sender] += msg.value;
     }
 
-    /// @dev BUG: sends ETH before updating state → re-entrant call drains vault.
     function withdraw() external {
         uint256 amount = balances[msg.sender];
         require(amount > 0, "nothing to withdraw");
-        // ❌ Interaction BEFORE effect
         (bool ok,) = msg.sender.call{value: amount}("");
         require(ok, "transfer failed");
-        balances[msg.sender] = 0; // ❌ Effect AFTER interaction
+        balances[msg.sender] = 0; 
     }
 }
 
-/// @notice FIXED vault — CEI pattern + ReentrancyGuard.
 contract FixedVault {
     using SafeERC20 for IERC20;
 
@@ -56,14 +47,12 @@ contract FixedVault {
     function withdraw() external nonReentrant {
         uint256 amount = balances[msg.sender];
         if (amount == 0) revert ZeroBalance();
-        // ✅ Effect BEFORE interaction
         balances[msg.sender] = 0;
         (bool ok,) = msg.sender.call{value: amount}("");
         if (!ok) revert TransferFailed();
     }
 }
 
-/// @notice Attacker contract that re-enters the vulnerable vault.
 contract ReentrancyAttacker {
     VulnerableVault public target;
     uint256 public stolenAmount;
@@ -80,32 +69,24 @@ contract ReentrancyAttacker {
     receive() external payable {
         if (address(target).balance >= msg.value && msg.value > 0) {
             stolenAmount += msg.value;
-            target.withdraw(); // re-enter
+            target.withdraw(); 
         }
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CASE STUDY 2: ACCESS CONTROL
-// Demonstrates unguarded admin function → fixed with OpenZeppelin AccessControl.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// @notice VULNERABLE contract — no access control on privileged functions.
 contract VulnerableProtocol {
     address public owner;
     uint256 public fee;
 
     constructor() {
         owner = msg.sender;
-        fee = 30; // 0.3 %
+        fee = 30; 
     }
 
-    /// @dev BUG: anyone can call this — no modifier.
     function setFee(uint256 newFee) external {
-        fee = newFee; // ❌ unguarded
+        fee = newFee; 
     }
 
-    /// @dev BUG: anyone can drain funds.
     function withdrawAll(address to) external {
         (bool ok,) = to.call{value: address(this).balance}("");
         require(ok);
@@ -116,7 +97,6 @@ contract VulnerableProtocol {
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-/// @notice FIXED contract — OpenZeppelin AccessControl guards every privileged fn.
 contract FixedProtocol is AccessControl {
     bytes32 public constant FEE_SETTER = keccak256("FEE_SETTER");
     bytes32 public constant WITHDRAWER = keccak256("WITHDRAWER");
@@ -131,12 +111,10 @@ contract FixedProtocol is AccessControl {
         fee = 30;
     }
 
-    /// ✅ Only FEE_SETTER role.
     function setFee(uint256 newFee) external onlyRole(FEE_SETTER) {
         fee = newFee;
     }
 
-    /// ✅ Only WITHDRAWER role; uses call{value:} not transfer.
     function withdrawAll(address payable to) external onlyRole(WITHDRAWER) {
         uint256 bal = address(this).balance;
         (bool ok,) = to.call{value: bal}("");
@@ -146,26 +124,19 @@ contract FixedProtocol is AccessControl {
     receive() external payable {}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tests
-// ─────────────────────────────────────────────────────────────────────────────
 contract SecurityReproductionTest is Test {
-    // ── REENTRANCY ─────────────────────────────────────────────────────────
     function test_reentrancy_VULNERABLE_canBeExploited() public {
         VulnerableVault vault = new VulnerableVault();
         address victim = makeAddr("victim");
 
-        // Victim deposits 10 ETH
         vm.deal(victim, 10 ether);
         vm.prank(victim);
         vault.deposit{value: 10 ether}();
 
-        // Attacker deposits 1 ETH and attacks
         ReentrancyAttacker attacker = new ReentrancyAttacker(address(vault));
         vm.deal(address(attacker), 1 ether);
         attacker.attack{value: 1 ether}();
 
-        // Attacker drained the vault (including victim's funds)
         assertEq(address(vault).balance, 0);
         assertGt(attacker.stolenAmount(), 1 ether);
     }
@@ -173,37 +144,30 @@ contract SecurityReproductionTest is Test {
     function test_reentrancy_FIXED_preventsExploit() public {
         FixedVault vault = new FixedVault();
 
-        // Victim deposits 10 ETH
         address victim = makeAddr("victim2");
         vm.deal(victim, 10 ether);
         vm.prank(victim);
         vault.deposit{value: 10 ether}();
 
-        // Deploy attacker (targets the fixed vault, but won't work)
-        // We simulate re-entry attempt using a manual call sequence
         address evil = makeAddr("evil");
         vm.deal(evil, 1 ether);
         vm.prank(evil);
         vault.deposit{value: 1 ether}();
 
-        // Withdraw works normally
         vm.prank(evil);
         vault.withdraw();
         assertEq(vault.balances(evil), 0);
 
-        // Victim's funds are intact
         assertEq(vault.balances(victim), 10 ether);
     }
 
-    // ── ACCESS CONTROL ─────────────────────────────────────────────────────
     function test_accessControl_VULNERABLE_anyoneCanSetFee() public {
         VulnerableProtocol proto = new VulnerableProtocol();
         address attacker = makeAddr("attacker");
 
-        // BUG: attacker can set fee to 0 and drain pool
         vm.prank(attacker);
         proto.setFee(0);
-        assertEq(proto.fee(), 0); // exploit succeeded
+        assertEq(proto.fee(), 0);
     }
 
     function test_accessControl_FIXED_blocksUnauthorizedSetFee() public {
@@ -211,11 +175,10 @@ contract SecurityReproductionTest is Test {
         address attacker = makeAddr("attacker2");
         FixedProtocol proto = new FixedProtocol(admin);
 
-        // Attacker tries to set fee — should revert
         vm.prank(attacker);
         vm.expectRevert();
         proto.setFee(0);
-        assertEq(proto.fee(), 30); // unchanged
+        assertEq(proto.fee(), 30); 
     }
 
     function test_accessControl_VULNERABLE_anyoneCanDrain() public {
@@ -225,7 +188,7 @@ contract SecurityReproductionTest is Test {
 
         vm.prank(attacker);
         proto.withdrawAll(attacker);
-        assertEq(attacker.balance, 100 ether); // drained!
+        assertEq(attacker.balance, 100 ether); 
     }
 
     function test_accessControl_FIXED_blocksUnauthorizedWithdraw() public {
@@ -237,7 +200,7 @@ contract SecurityReproductionTest is Test {
         vm.prank(attacker);
         vm.expectRevert();
         proto.withdrawAll(payable(attacker));
-        assertEq(attacker.balance, 0); // funds safe
+        assertEq(attacker.balance, 0); 
     }
 
     function test_accessControl_FIXED_adminCanSetFee() public {
@@ -249,15 +212,18 @@ contract SecurityReproductionTest is Test {
     }
 
     function test_accessControl_FIXED_roleTransfer() public {
-        address admin  = makeAddr("admin4");
+        address admin = makeAddr("admin4");
         address newFee = makeAddr("newFeeManager");
         FixedProtocol proto = new FixedProtocol(admin);
 
+        bytes32 feeSetterRole = proto.FEE_SETTER();
+
         vm.prank(admin);
-        proto.grantRole(proto.FEE_SETTER(), newFee);
+        proto.grantRole(feeSetterRole, newFee);
 
         vm.prank(newFee);
         proto.setFee(10);
+
         assertEq(proto.fee(), 10);
     }
 }

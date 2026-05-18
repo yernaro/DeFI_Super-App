@@ -18,9 +18,6 @@ import "../../src/oracles/ChainlinkOracle.sol";
 import "../../src/oracles/MockAggregator.sol";
 import "../../src/assembly/MathUtils.sol";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Mock ERC-20 for tests
-// ─────────────────────────────────────────────────────────────────────────────
 contract MockERC20 is ERC20 {
     uint8 private _dec;
     constructor(string memory n, string memory s, uint8 d) ERC20(n, s) { _dec = d; }
@@ -29,41 +26,31 @@ contract MockERC20 is ERC20 {
     function burn(address from, uint256 amount) external { _burn(from, amount); }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Base fixture — deploys the full protocol
-// ─────────────────────────────────────────────────────────────────────────────
 abstract contract BaseTest is Test {
-    // Users
     address internal admin    = makeAddr("admin");
     address internal alice    = makeAddr("alice");
     address internal bob      = makeAddr("bob");
     address internal carol    = makeAddr("carol");
     address internal keeper   = makeAddr("keeper");
 
-    // Tokens
-    MockERC20 internal tokenA; // collateral (18 dec)
-    MockERC20 internal tokenB; // debt / underlying (18 dec)
-    MockERC20 internal tokenC; // 3rd token for additional pairs
+    MockERC20 internal tokenA; 
+    MockERC20 internal tokenB; 
+    MockERC20 internal tokenC; 
 
-    // Oracle
     ChainlinkOracle internal oracle;
     MockAggregator  internal feedA;
     MockAggregator  internal feedB;
 
-    // AMM
     AMM        internal ammImpl;
     AMM        internal amm;
     AMMFactory internal factory;
 
-    // Lending
     LendingPool internal lendingImpl;
     LendingPool internal lending;
 
-    // Vault
     YieldVault internal vaultImpl;
     YieldVault internal vault;
 
-    // Governance
     GovernanceToken  internal govTokenImpl;
     GovernanceToken  internal govToken;
     TimelockController internal timelock;
@@ -73,20 +60,17 @@ abstract contract BaseTest is Test {
     function setUp() public virtual {
         vm.startPrank(admin);
 
-        // ── Deploy mock tokens ───────────────────────────────────────────────
         tokenA = new MockERC20("TokenA", "TKA", 18);
         tokenB = new MockERC20("TokenB", "TKB", 18);
         tokenC = new MockERC20("TokenC", "TKC", 18);
 
-        // ── Oracle ───────────────────────────────────────────────────────────
         oracle = new ChainlinkOracle(admin);
-        feedA  = new MockAggregator(8, 2000e8); // tokenA = $2000
-        feedB  = new MockAggregator(8, 1e8);    // tokenB = $1
+        feedA  = new MockAggregator(8, 2000e8); 
+        feedB  = new MockAggregator(8, 1e8);    
 
         oracle.setFeed(address(tokenA), address(feedA), 3600);
         oracle.setFeed(address(tokenB), address(feedB), 3600);
 
-        // ── Governance token ─────────────────────────────────────────────────
         govTokenImpl = new GovernanceToken();
         bytes memory govInitData = abi.encodeCall(
             GovernanceToken.initialize,
@@ -95,32 +79,25 @@ abstract contract BaseTest is Test {
         ERC1967Proxy govProxy = new ERC1967Proxy(address(govTokenImpl), govInitData);
         govToken = GovernanceToken(address(govProxy));
 
-        // ── Timelock (2-day delay) ────────────────────────────────────────────
         address[] memory proposers  = new address[](1);
         address[] memory executors  = new address[](1);
-        proposers[0] = address(0); // placeholder; governor added below
-        executors[0] = address(0); // anyone can execute
+        proposers[0] = address(0); 
+        executors[0] = address(0); 
         timelock = new TimelockController(2 days, proposers, executors, admin);
 
-        // ── Governor ─────────────────────────────────────────────────────────
         governor = new DeFiGovernor(IVotes(address(govToken)), timelock);
 
-        // Grant governor the PROPOSER_ROLE on timelock; revoke admin's proposer
         timelock.grantRole(timelock.PROPOSER_ROLE(), address(governor));
         timelock.grantRole(timelock.CANCELLER_ROLE(), address(governor));
-        // Keep admin as timelock admin for test convenience
 
-        // ── Treasury ──────────────────────────────────────────────────────────
         treasury = new Treasury(address(timelock));
 
-        // ── AMM ──────────────────────────────────────────────────────────────
         ammImpl = new AMM();
         factory = new AMMFactory(admin, address(ammImpl));
 
         address ammAddr = factory.createPair(address(tokenA), address(tokenB));
         amm = AMM(ammAddr);
 
-        // ── Lending ──────────────────────────────────────────────────────────
         lendingImpl = new LendingPool();
         bytes memory lendingInit = abi.encodeCall(
             LendingPool.initialize,
@@ -129,7 +106,6 @@ abstract contract BaseTest is Test {
         ERC1967Proxy lendingProxy = new ERC1967Proxy(address(lendingImpl), lendingInit);
         lending = LendingPool(address(lendingProxy));
 
-        // ── Vault ────────────────────────────────────────────────────────────
         vaultImpl = new YieldVault();
         bytes memory vaultInit = abi.encodeCall(
             YieldVault.initialize,
@@ -138,18 +114,15 @@ abstract contract BaseTest is Test {
         ERC1967Proxy vaultProxy = new ERC1967Proxy(address(vaultImpl), vaultInit);
         vault = YieldVault(address(vaultProxy));
 
-        // Grant keeper role
         vault.grantRole(vault.KEEPER_ROLE(), keeper);
 
         vm.stopPrank();
 
-        // ── Seed user balances ───────────────────────────────────────────────
         _mintAll(alice,  10_000e18, 50_000e18);
         _mintAll(bob,    10_000e18, 50_000e18);
         _mintAll(carol,  10_000e18, 50_000e18);
         _mintAll(keeper, 0,         10_000e18);
 
-        // Approve for convenience
         _approveAll(alice);
         _approveAll(bob);
         _approveAll(carol);
@@ -158,9 +131,6 @@ abstract contract BaseTest is Test {
         tokenB.approve(address(vault), type(uint256).max);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────────────────
     function _mintAll(address user, uint256 amtA, uint256 amtB) internal {
         tokenA.mint(user, amtA);
         tokenB.mint(user, amtB);
@@ -176,7 +146,6 @@ abstract contract BaseTest is Test {
         vm.stopPrank();
     }
 
-    /// @dev Add a standard amount of liquidity from `user`.
     function _addLiquidity(address user, uint256 amtA, uint256 amtB)
         internal
         returns (uint256 lp)
@@ -185,19 +154,16 @@ abstract contract BaseTest is Test {
         (,, lp) = amm.addLiquidity(amtA, amtB, 0, 0);
     }
 
-    /// @dev Supply debt liquidity to the lending pool.
     function _supplyDebt(address user, uint256 amount) internal {
         vm.prank(user);
         lending.supplyDebtToken(amount);
     }
 
-    /// @dev Deposit collateral.
     function _depositCollateral(address user, uint256 amount) internal {
         vm.prank(user);
         lending.depositCollateral(amount);
     }
 
-    /// @dev Borrow from lending pool.
     function _borrow(address user, uint256 amount) internal {
         vm.prank(user);
         lending.borrow(amount);
