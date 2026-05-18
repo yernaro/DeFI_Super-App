@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract ProtocolBadgeNFT is Initializable, ERC721Upgradeable, AccessControlUpgradeable, UUPSUpgradeable {
-    bytes32 public constant MINTER_ROLE   = keccak256("MINTER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
     uint256 public maxSupply;
@@ -65,7 +65,12 @@ contract ProtocolBadgeNFT is Initializable, ERC721Upgradeable, AccessControlUpgr
 
     function _authorizeUpgrade(address newImpl) internal override onlyRole(UPGRADER_ROLE) {}
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721Upgradeable, AccessControlUpgradeable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721Upgradeable, AccessControlUpgradeable)
+        returns (bool)
+    {
         return super.supportsInterface(interfaceId);
     }
 
