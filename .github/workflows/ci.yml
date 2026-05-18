@@ -26,7 +26,7 @@ jobs:
       - name: forge fmt --check
         run: forge fmt --check
 
-            - name: Install Node (for solhint + prettier)
+      - name: Install Node (for solhint + prettier)
         uses: actions/setup-node@v4
         with:
           node-version: "20"
