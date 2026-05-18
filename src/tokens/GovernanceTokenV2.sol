@@ -4,8 +4,8 @@ pragma solidity 0.8.24;
 import "./GovernanceToken.sol";
 
 contract GovernanceTokenV2 is GovernanceToken {
-    uint256 public stakingRewardRate; 
-    bool    private _v2Initialized;
+    uint256 public stakingRewardRate;
+    bool private _v2Initialized;
 
     event StakingRewardRateSet(uint256 oldRate, uint256 newRate);
 

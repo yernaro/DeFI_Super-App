@@ -14,10 +14,10 @@ contract GovernanceToken is
     AccessControlUpgradeable,
     UUPSUpgradeable
 {
-    bytes32 public constant MINTER_ROLE   = keccak256("MINTER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    uint256 public maxSupply; 
+    uint256 public maxSupply;
 
     event Minted(address indexed to, uint256 amount);
     event Burned(address indexed from, uint256 amount);
@@ -42,10 +42,9 @@ contract GovernanceToken is
         maxSupply = _maxSupply;
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        _grantRole(UPGRADER_ROLE,      admin);
-        _grantRole(MINTER_ROLE,        minter);
+        _grantRole(UPGRADER_ROLE, admin);
+        _grantRole(MINTER_ROLE, minter);
     }
-
 
     function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
         if (to == address(0)) revert ZeroAddress();
@@ -62,7 +61,7 @@ contract GovernanceToken is
         emit Burned(msg.sender, amount);
     }
 
-    function _authorizeUpgrade(address newImpl) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImpl) internal override onlyRole(UPGRADER_ROLE) { }
 
     function _update(address from, address to, uint256 value)
         internal
@@ -71,12 +70,7 @@ contract GovernanceToken is
         super._update(from, to, value);
     }
 
-    function nonces(address owner)
-        public
-        view
-        override(ERC20PermitUpgradeable, NoncesUpgradeable)
-        returns (uint256)
-    {
+    function nonces(address owner) public view override(ERC20PermitUpgradeable, NoncesUpgradeable) returns (uint256) {
         return super.nonces(owner);
     }
 }

@@ -21,12 +21,12 @@ contract YieldVault is
 {
     using SafeERC20 for IERC20;
 
-    bytes32 public constant KEEPER_ROLE   = keccak256("KEEPER_ROLE");
-    bytes32 public constant PAUSER_ROLE   = keccak256("PAUSER_ROLE");
+    bytes32 public constant KEEPER_ROLE = keccak256("KEEPER_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
     uint256 public totalHarvested;
-    uint256 public performanceFee; 
+    uint256 public performanceFee;
     address public feeRecipient;
 
     uint256 private constant VIRTUAL_SHARES = 1e3;
@@ -40,7 +40,9 @@ contract YieldVault is
     error ZeroAddress();
     error FeeTooHigh();
 
-    constructor() { _disableInitializers(); }
+    constructor() {
+        _disableInitializers();
+    }
 
     function initialize(
         address _asset,
@@ -50,8 +52,10 @@ contract YieldVault is
         address _feeRecipient,
         address admin
     ) external initializer {
-        if (_asset == address(0) || _feeRecipient == address(0) || admin == address(0)) revert ZeroAddress();
-        if (_performanceFee > 3000) revert FeeTooHigh(); 
+        if (_asset == address(0) || _feeRecipient == address(0) || admin == address(0)) {
+            revert ZeroAddress();
+        }
+        if (_performanceFee > 3000) revert FeeTooHigh();
 
         __ERC4626_init(IERC20(_asset));
         __ERC20_init(_name, _symbol);
@@ -61,25 +65,19 @@ contract YieldVault is
         __UUPSUpgradeable_init();
 
         performanceFee = _performanceFee;
-        feeRecipient   = _feeRecipient;
+        feeRecipient = _feeRecipient;
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        _grantRole(KEEPER_ROLE,   admin);
-        _grantRole(PAUSER_ROLE,   admin);
+        _grantRole(KEEPER_ROLE, admin);
+        _grantRole(PAUSER_ROLE, admin);
         _grantRole(UPGRADER_ROLE, admin);
     }
-
 
     function totalAssets() public view override returns (uint256) {
         return IERC20(asset()).balanceOf(address(this));
     }
 
-    function _convertToShares(uint256 assets, Math.Rounding rounding)
-        internal
-        view
-        override
-        returns (uint256)
-    {
+    function _convertToShares(uint256 assets, Math.Rounding rounding) internal view override returns (uint256) {
         return MathUtils.mulDiv(
             assets,
             totalSupply() + VIRTUAL_SHARES,
@@ -87,12 +85,7 @@ contract YieldVault is
         );
     }
 
-    function _convertToAssets(uint256 shares, Math.Rounding rounding)
-        internal
-        view
-        override
-        returns (uint256)
-    {
+    function _convertToAssets(uint256 shares, Math.Rounding rounding) internal view override returns (uint256) {
         return MathUtils.mulDiv(
             shares,
             totalAssets() + VIRTUAL_ASSETS,
@@ -100,14 +93,7 @@ contract YieldVault is
         );
     }
 
-
-    function deposit(uint256 assets, address receiver)
-        public
-        override
-        nonReentrant
-        whenNotPaused
-        returns (uint256)
-    {
+    function deposit(uint256 assets, address receiver) public override nonReentrant whenNotPaused returns (uint256) {
         if (assets == 0) revert ZeroAmount();
         return super.deposit(assets, receiver);
     }
@@ -123,13 +109,7 @@ contract YieldVault is
         return super.withdraw(assets, receiver, owner_);
     }
 
-    function mint(uint256 shares, address receiver)
-        public
-        override
-        nonReentrant
-        whenNotPaused
-        returns (uint256)
-    {
+    function mint(uint256 shares, address receiver) public override nonReentrant whenNotPaused returns (uint256) {
         if (shares == 0) revert ZeroAmount();
         return super.mint(shares, receiver);
     }
@@ -144,7 +124,6 @@ contract YieldVault is
         if (shares == 0) revert ZeroAmount();
         return super.redeem(shares, receiver, owner_);
     }
-
 
     function harvestYield(uint256 amount) external onlyRole(KEEPER_ROLE) nonReentrant {
         if (amount == 0) revert ZeroAmount();
@@ -174,8 +153,13 @@ contract YieldVault is
         feeRecipient = recipient;
     }
 
-    function pause()   external onlyRole(PAUSER_ROLE) { _pause(); }
-    function unpause() external onlyRole(PAUSER_ROLE) { _unpause(); }
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
 
-    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) {}
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
+
+    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) { }
 }

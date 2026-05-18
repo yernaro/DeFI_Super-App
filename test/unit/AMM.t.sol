@@ -43,7 +43,7 @@ contract AMMTest is BaseTest {
 
         vm.prank(bob);
         (, uint256 bUsed,) = amm.addLiquidity(500e18, 9999e18, 0, 0);
-        assertEq(bUsed, 1000e18); 
+        assertEq(bUsed, 1000e18);
     }
 
     function test_addLiquidity_reverts_onZeroAmount() public {
@@ -141,7 +141,7 @@ contract AMMTest is BaseTest {
         _addLiquidity(alice, 1000e18, 2000e18);
         vm.prank(bob);
         vm.expectRevert();
-        amm.swap(10e18, 999e18, true, bob); 
+        amm.swap(10e18, 999e18, true, bob);
     }
 
     function test_swap_reverts_onZeroRecipient() public {
@@ -201,11 +201,11 @@ contract AMMTest is BaseTest {
     }
 
     function test_getAmountIn_roundtrip() public view {
-        uint256 reserveIn  = 1000e18;
+        uint256 reserveIn = 1000e18;
         uint256 reserveOut = 2000e18;
         uint256 desiredOut = 50e18;
         uint256 requiredIn = amm.getAmountIn(desiredOut, reserveIn, reserveOut);
-        uint256 actualOut  = amm.getAmountOut(requiredIn, reserveIn, reserveOut);
+        uint256 actualOut = amm.getAmountOut(requiredIn, reserveIn, reserveOut);
         assertGe(actualOut, desiredOut);
     }
 
@@ -234,7 +234,7 @@ contract AMMTest is BaseTest {
     function test_factory_createPair_create2_deterministic() public {
         vm.startPrank(admin);
         address predicted = factory.predictPairAddress(address(tokenA), address(tokenC));
-        address created   = factory.createPairDeterministic(address(tokenA), address(tokenC));
+        address created = factory.createPairDeterministic(address(tokenA), address(tokenC));
         vm.stopPrank();
         assertEq(created, predicted);
     }
@@ -268,10 +268,7 @@ contract AMMTest is BaseTest {
     }
 
     function test_mulDiv_matchesReference() public pure {
-        assertEq(
-            MathUtils.mulDiv(1e18, 1e18, 1e9),
-            MathUtils.mulDivSolidity(1e18, 1e18, 1e9)
-        );
+        assertEq(MathUtils.mulDiv(1e18, 1e18, 1e9), MathUtils.mulDivSolidity(1e18, 1e18, 1e9));
     }
 
     function test_mathUtils_minMax() public pure {

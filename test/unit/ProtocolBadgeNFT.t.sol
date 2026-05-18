@@ -16,10 +16,7 @@ contract ProtocolBadgeNFTTest is Test {
     function setUp() public {
         ProtocolBadgeNFT impl = new ProtocolBadgeNFT();
 
-        bytes memory data = abi.encodeCall(
-            ProtocolBadgeNFT.initialize,
-            (admin, minter, 3, "ipfs://badge/")
-        );
+        bytes memory data = abi.encodeCall(ProtocolBadgeNFT.initialize, (admin, minter, 3, "ipfs://badge/"));
 
         ERC1967Proxy proxy = new ERC1967Proxy(address(impl), data);
         badge = ProtocolBadgeNFT(address(proxy));
@@ -39,10 +36,7 @@ contract ProtocolBadgeNFTTest is Test {
     function test_initialize_reverts_zeroAdmin() public {
         ProtocolBadgeNFT impl = new ProtocolBadgeNFT();
 
-        bytes memory data = abi.encodeCall(
-            ProtocolBadgeNFT.initialize,
-            (address(0), minter, 3, "ipfs://badge/")
-        );
+        bytes memory data = abi.encodeCall(ProtocolBadgeNFT.initialize, (address(0), minter, 3, "ipfs://badge/"));
 
         vm.expectRevert(ProtocolBadgeNFT.ZeroAddress.selector);
         new ERC1967Proxy(address(impl), data);
@@ -51,10 +45,7 @@ contract ProtocolBadgeNFTTest is Test {
     function test_initialize_reverts_zeroMinter() public {
         ProtocolBadgeNFT impl = new ProtocolBadgeNFT();
 
-        bytes memory data = abi.encodeCall(
-            ProtocolBadgeNFT.initialize,
-            (admin, address(0), 3, "ipfs://badge/")
-        );
+        bytes memory data = abi.encodeCall(ProtocolBadgeNFT.initialize, (admin, address(0), 3, "ipfs://badge/"));
 
         vm.expectRevert(ProtocolBadgeNFT.ZeroAddress.selector);
         new ERC1967Proxy(address(impl), data);
@@ -63,10 +54,7 @@ contract ProtocolBadgeNFTTest is Test {
     function test_initialize_reverts_zeroMaxSupply() public {
         ProtocolBadgeNFT impl = new ProtocolBadgeNFT();
 
-        bytes memory data = abi.encodeCall(
-            ProtocolBadgeNFT.initialize,
-            (admin, minter, 0, "ipfs://badge/")
-        );
+        bytes memory data = abi.encodeCall(ProtocolBadgeNFT.initialize, (admin, minter, 0, "ipfs://badge/"));
 
         vm.expectRevert(ProtocolBadgeNFT.ZeroAmount.selector);
         new ERC1967Proxy(address(impl), data);
@@ -101,13 +89,7 @@ contract ProtocolBadgeNFTTest is Test {
         badge.mint(bob);
         badge.mint(address(0x1234));
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ProtocolBadgeNFT.MaxSupplyExceeded.selector,
-                1,
-                0
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ProtocolBadgeNFT.MaxSupplyExceeded.selector, 1, 0));
         badge.mint(address(0x5678));
 
         vm.stopPrank();

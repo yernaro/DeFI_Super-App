@@ -10,7 +10,6 @@ contract FuzzTests is BaseTest {
         _supplyDebt(bob, 30_000e18);
     }
 
-
     function testFuzz_amm_kInvariant(uint256 amtIn, bool aToB) public {
         (uint112 rA, uint112 rB,) = amm.getReserves();
         uint256 k0 = uint256(rA) * uint256(rB);
@@ -71,7 +70,6 @@ contract FuzzTests is BaseTest {
         assertApproxEqAbs(outB, expectedB, 1);
     }
 
-
     function testFuzz_vault_depositRedeem(uint256 assets) public {
         assets = bound(assets, 1e6, 10_000e18);
         tokenB.mint(alice, assets);
@@ -99,7 +97,7 @@ contract FuzzTests is BaseTest {
         vm.stopPrank();
 
         assertApproxEqAbs(sharesBurned, shares, 2000);
-}
+    }
 
     function testFuzz_vault_totalAssetsMonotonicallyIncreasing(uint256 a1, uint256 a2) public {
         a1 = bound(a1, 1e6, 5000e18);

@@ -156,7 +156,7 @@ contract Invariant_Lending_DebtAccounting is BaseTest {
         vm.startPrank(user);
         tokenA.approve(address(lending), colAmt);
         lending.depositCollateral(colAmt);
-        try lending.borrow(borrowAmt) {} catch {}
+        try lending.borrow(borrowAmt) { } catch { }
         vm.stopPrank();
     }
 

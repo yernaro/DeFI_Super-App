@@ -110,11 +110,7 @@ contract MathUtilsExtraCoverageTest is Test {
     }
 
     function test_mulDiv_fullPrecisionPath() public pure {
-        uint256 result = MathUtils.mulDiv(
-            type(uint256).max,
-            type(uint256).max,
-            type(uint256).max
-        );
+        uint256 result = MathUtils.mulDiv(type(uint256).max, type(uint256).max, type(uint256).max);
 
         assertEq(result, type(uint256).max);
     }
@@ -126,11 +122,7 @@ contract MathUtilsExtraCoverageTest is Test {
 
     function test_mulDiv_reverts_overflow() public {
         vm.expectRevert();
-        wrapper.mulDivExternal(
-            type(uint256).max,
-            type(uint256).max,
-            type(uint256).max - 1
-        );
+        wrapper.mulDivExternal(type(uint256).max, type(uint256).max, type(uint256).max - 1);
     }
 
     function test_mulDivSolidity_basicCases() public pure {

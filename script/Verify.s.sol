@@ -37,68 +37,37 @@ contract Verify is Script {
 
         console2.log("\n========== POST-DEPLOYMENT VERIFICATION ==========\n");
 
-        _check(
-            "Timelock minimum delay == 2 days",
-            timelock.getMinDelay() == EXPECTED_TIMELOCK_DELAY
-        );
+        _check("Timelock minimum delay == 2 days", timelock.getMinDelay() == EXPECTED_TIMELOCK_DELAY);
+
+        _check("Governor votingDelay == 1 day", governor.votingDelay() == EXPECTED_VOTING_DELAY);
+
+        _check("Governor votingPeriod == 1 week", governor.votingPeriod() == EXPECTED_VOTING_PERIOD);
+
+        _check("Governor quorumNumerator == 4%", governor.quorumNumerator() == EXPECTED_QUORUM_PCT);
+
+        _check("Governor token == GovToken", address(governor.token()) == govToken);
+
+        _check("Governor has PROPOSER_ROLE on Timelock", timelock.hasRole(timelock.PROPOSER_ROLE(), address(governor)));
 
         _check(
-            "Governor votingDelay == 1 day",
-            governor.votingDelay() == EXPECTED_VOTING_DELAY
-        );
-
-        _check(
-            "Governor votingPeriod == 1 week",
-            governor.votingPeriod() == EXPECTED_VOTING_PERIOD
-        );
-
-        _check(
-            "Governor quorumNumerator == 4%",
-            governor.quorumNumerator() == EXPECTED_QUORUM_PCT
-        );
-
-        _check(
-            "Governor token == GovToken",
-            address(governor.token()) == govToken
-        );
-
-        _check(
-            "Governor has PROPOSER_ROLE on Timelock",
-            timelock.hasRole(timelock.PROPOSER_ROLE(), address(governor))
-        );
-
-        _check(
-            "Governor has CANCELLER_ROLE on Timelock",
-            timelock.hasRole(timelock.CANCELLER_ROLE(), address(governor))
+            "Governor has CANCELLER_ROLE on Timelock", timelock.hasRole(timelock.CANCELLER_ROLE(), address(governor))
         );
 
         bytes32 minterRole = token.MINTER_ROLE();
 
-        _check(
-            "Timelock has MINTER_ROLE on GovToken",
-            token.hasRole(minterRole, timelockAddr)
-        );
+        _check("Timelock has MINTER_ROLE on GovToken", token.hasRole(minterRole, timelockAddr));
 
-        _check(
-            "Treasury is deployed",
-            treasuryAddr != address(0)
-        );
+        _check("Treasury is deployed", treasuryAddr != address(0));
 
         LendingPool lending = LendingPool(lendingAddr);
         bytes32 lendingAdminRole = lending.DEFAULT_ADMIN_ROLE();
 
-        console2.log(
-            "[INFO] LendingPool deployer has admin role:",
-            lending.hasRole(lendingAdminRole, msg.sender)
-        );
+        console2.log("[INFO] LendingPool deployer has admin role:", lending.hasRole(lendingAdminRole, msg.sender));
 
         YieldVault vault = YieldVault(vaultAddr);
         bytes32 vaultAdminRole = vault.DEFAULT_ADMIN_ROLE();
 
-        console2.log(
-            "[INFO] YieldVault deployer has admin role:",
-            vault.hasRole(vaultAdminRole, msg.sender)
-        );
+        console2.log("[INFO] YieldVault deployer has admin role:", vault.hasRole(vaultAdminRole, msg.sender));
 
         (uint112 rA, uint112 rB,) = AMM(ammPair).getReserves();
         console2.log("[INFO] AMM reserve A:", rA);

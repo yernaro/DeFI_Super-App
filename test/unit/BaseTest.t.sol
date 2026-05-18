@@ -20,29 +20,41 @@ import "../../src/assembly/MathUtils.sol";
 
 contract MockERC20 is ERC20 {
     uint8 private _dec;
-    constructor(string memory n, string memory s, uint8 d) ERC20(n, s) { _dec = d; }
-    function decimals() public view override returns (uint8) { return _dec; }
-    function mint(address to, uint256 amount) external { _mint(to, amount); }
-    function burn(address from, uint256 amount) external { _burn(from, amount); }
+
+    constructor(string memory n, string memory s, uint8 d) ERC20(n, s) {
+        _dec = d;
+    }
+
+    function decimals() public view override returns (uint8) {
+        return _dec;
+    }
+
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
+
+    function burn(address from, uint256 amount) external {
+        _burn(from, amount);
+    }
 }
 
 abstract contract BaseTest is Test {
-    address internal admin    = makeAddr("admin");
-    address internal alice    = makeAddr("alice");
-    address internal bob      = makeAddr("bob");
-    address internal carol    = makeAddr("carol");
-    address internal keeper   = makeAddr("keeper");
+    address internal admin = makeAddr("admin");
+    address internal alice = makeAddr("alice");
+    address internal bob = makeAddr("bob");
+    address internal carol = makeAddr("carol");
+    address internal keeper = makeAddr("keeper");
 
-    MockERC20 internal tokenA; 
-    MockERC20 internal tokenB; 
-    MockERC20 internal tokenC; 
+    MockERC20 internal tokenA;
+    MockERC20 internal tokenB;
+    MockERC20 internal tokenC;
 
     ChainlinkOracle internal oracle;
-    MockAggregator  internal feedA;
-    MockAggregator  internal feedB;
+    MockAggregator internal feedA;
+    MockAggregator internal feedB;
 
-    AMM        internal ammImpl;
-    AMM        internal amm;
+    AMM internal ammImpl;
+    AMM internal amm;
     AMMFactory internal factory;
 
     LendingPool internal lendingImpl;
@@ -51,11 +63,11 @@ abstract contract BaseTest is Test {
     YieldVault internal vaultImpl;
     YieldVault internal vault;
 
-    GovernanceToken  internal govTokenImpl;
-    GovernanceToken  internal govToken;
+    GovernanceToken internal govTokenImpl;
+    GovernanceToken internal govToken;
     TimelockController internal timelock;
-    DeFiGovernor     internal governor;
-    Treasury         internal treasury;
+    DeFiGovernor internal governor;
+    Treasury internal treasury;
 
     function setUp() public virtual {
         vm.startPrank(admin);
@@ -65,24 +77,21 @@ abstract contract BaseTest is Test {
         tokenC = new MockERC20("TokenC", "TKC", 18);
 
         oracle = new ChainlinkOracle(admin);
-        feedA  = new MockAggregator(8, 2000e8); 
-        feedB  = new MockAggregator(8, 1e8);    
+        feedA = new MockAggregator(8, 2000e8);
+        feedB = new MockAggregator(8, 1e8);
 
         oracle.setFeed(address(tokenA), address(feedA), 3600);
         oracle.setFeed(address(tokenB), address(feedB), 3600);
 
         govTokenImpl = new GovernanceToken();
-        bytes memory govInitData = abi.encodeCall(
-            GovernanceToken.initialize,
-            (admin, admin, 100_000_000e18)
-        );
+        bytes memory govInitData = abi.encodeCall(GovernanceToken.initialize, (admin, admin, 100_000_000e18));
         ERC1967Proxy govProxy = new ERC1967Proxy(address(govTokenImpl), govInitData);
         govToken = GovernanceToken(address(govProxy));
 
-        address[] memory proposers  = new address[](1);
-        address[] memory executors  = new address[](1);
-        proposers[0] = address(0); 
-        executors[0] = address(0); 
+        address[] memory proposers = new address[](1);
+        address[] memory executors = new address[](1);
+        proposers[0] = address(0);
+        executors[0] = address(0);
         timelock = new TimelockController(2 days, proposers, executors, admin);
 
         governor = new DeFiGovernor(IVotes(address(govToken)), timelock);
@@ -100,16 +109,14 @@ abstract contract BaseTest is Test {
 
         lendingImpl = new LendingPool();
         bytes memory lendingInit = abi.encodeCall(
-            LendingPool.initialize,
-            (address(tokenA), address(tokenB), address(oracle), address(treasury), admin)
+            LendingPool.initialize, (address(tokenA), address(tokenB), address(oracle), address(treasury), admin)
         );
         ERC1967Proxy lendingProxy = new ERC1967Proxy(address(lendingImpl), lendingInit);
         lending = LendingPool(address(lendingProxy));
 
         vaultImpl = new YieldVault();
         bytes memory vaultInit = abi.encodeCall(
-            YieldVault.initialize,
-            (address(tokenB), "DSA Yield Vault", "dsaYV", 1000, address(treasury), admin)
+            YieldVault.initialize, (address(tokenB), "DSA Yield Vault", "dsaYV", 1000, address(treasury), admin)
         );
         ERC1967Proxy vaultProxy = new ERC1967Proxy(address(vaultImpl), vaultInit);
         vault = YieldVault(address(vaultProxy));
@@ -118,10 +125,10 @@ abstract contract BaseTest is Test {
 
         vm.stopPrank();
 
-        _mintAll(alice,  10_000e18, 50_000e18);
-        _mintAll(bob,    10_000e18, 50_000e18);
-        _mintAll(carol,  10_000e18, 50_000e18);
-        _mintAll(keeper, 0,         10_000e18);
+        _mintAll(alice, 10_000e18, 50_000e18);
+        _mintAll(bob, 10_000e18, 50_000e18);
+        _mintAll(carol, 10_000e18, 50_000e18);
+        _mintAll(keeper, 0, 10_000e18);
 
         _approveAll(alice);
         _approveAll(bob);
@@ -138,18 +145,15 @@ abstract contract BaseTest is Test {
 
     function _approveAll(address user) internal {
         vm.startPrank(user);
-        tokenA.approve(address(amm),     type(uint256).max);
-        tokenB.approve(address(amm),     type(uint256).max);
+        tokenA.approve(address(amm), type(uint256).max);
+        tokenB.approve(address(amm), type(uint256).max);
         tokenA.approve(address(lending), type(uint256).max);
         tokenB.approve(address(lending), type(uint256).max);
-        tokenB.approve(address(vault),   type(uint256).max);
+        tokenB.approve(address(vault), type(uint256).max);
         vm.stopPrank();
     }
 
-    function _addLiquidity(address user, uint256 amtA, uint256 amtB)
-        internal
-        returns (uint256 lp)
-    {
+    function _addLiquidity(address user, uint256 amtA, uint256 amtB) internal returns (uint256 lp) {
         vm.prank(user);
         (,, lp) = amm.addLiquidity(amtA, amtB, 0, 0);
     }

@@ -9,10 +9,7 @@ contract GovernanceTokenExtraCoverageTest is BaseTest {
     function test_initialize_reverts_zeroAdmin() public {
         GovernanceToken impl = new GovernanceToken();
 
-        bytes memory data = abi.encodeCall(
-            GovernanceToken.initialize,
-            (address(0), admin, 100_000_000e18)
-        );
+        bytes memory data = abi.encodeCall(GovernanceToken.initialize, (address(0), admin, 100_000_000e18));
 
         vm.expectRevert(GovernanceToken.ZeroAddress.selector);
         new ERC1967Proxy(address(impl), data);
@@ -21,10 +18,7 @@ contract GovernanceTokenExtraCoverageTest is BaseTest {
     function test_initialize_reverts_zeroMinter() public {
         GovernanceToken impl = new GovernanceToken();
 
-        bytes memory data = abi.encodeCall(
-            GovernanceToken.initialize,
-            (admin, address(0), 100_000_000e18)
-        );
+        bytes memory data = abi.encodeCall(GovernanceToken.initialize, (admin, address(0), 100_000_000e18));
 
         vm.expectRevert(GovernanceToken.ZeroAddress.selector);
         new ERC1967Proxy(address(impl), data);
@@ -138,10 +132,7 @@ contract YieldVaultAdditionalCoverageTest is BaseTest {
     function test_yieldVault_initialize_reverts_zeroAsset() public {
         YieldVault impl = new YieldVault();
 
-        bytes memory data = abi.encodeCall(
-            YieldVault.initialize,
-            (address(0), "Vault", "vTOKEN", 1000, admin, admin)
-        );
+        bytes memory data = abi.encodeCall(YieldVault.initialize, (address(0), "Vault", "vTOKEN", 1000, admin, admin));
 
         vm.expectRevert(YieldVault.ZeroAddress.selector);
         new ERC1967Proxy(address(impl), data);
@@ -150,10 +141,8 @@ contract YieldVaultAdditionalCoverageTest is BaseTest {
     function test_yieldVault_initialize_reverts_zeroFeeRecipient() public {
         YieldVault impl = new YieldVault();
 
-        bytes memory data = abi.encodeCall(
-            YieldVault.initialize,
-            (address(tokenB), "Vault", "vTOKEN", 1000, address(0), admin)
-        );
+        bytes memory data =
+            abi.encodeCall(YieldVault.initialize, (address(tokenB), "Vault", "vTOKEN", 1000, address(0), admin));
 
         vm.expectRevert(YieldVault.ZeroAddress.selector);
         new ERC1967Proxy(address(impl), data);
@@ -162,10 +151,8 @@ contract YieldVaultAdditionalCoverageTest is BaseTest {
     function test_yieldVault_initialize_reverts_zeroAdmin() public {
         YieldVault impl = new YieldVault();
 
-        bytes memory data = abi.encodeCall(
-            YieldVault.initialize,
-            (address(tokenB), "Vault", "vTOKEN", 1000, admin, address(0))
-        );
+        bytes memory data =
+            abi.encodeCall(YieldVault.initialize, (address(tokenB), "Vault", "vTOKEN", 1000, admin, address(0)));
 
         vm.expectRevert(YieldVault.ZeroAddress.selector);
         new ERC1967Proxy(address(impl), data);
@@ -174,10 +161,8 @@ contract YieldVaultAdditionalCoverageTest is BaseTest {
     function test_yieldVault_initialize_reverts_feeTooHigh() public {
         YieldVault impl = new YieldVault();
 
-        bytes memory data = abi.encodeCall(
-            YieldVault.initialize,
-            (address(tokenB), "Vault", "vTOKEN", 3001, admin, admin)
-        );
+        bytes memory data =
+            abi.encodeCall(YieldVault.initialize, (address(tokenB), "Vault", "vTOKEN", 3001, admin, admin));
 
         vm.expectRevert(YieldVault.FeeTooHigh.selector);
         new ERC1967Proxy(address(impl), data);
@@ -189,8 +174,7 @@ contract LendingPoolAdditionalCoverageTest is BaseTest {
         LendingPool impl = new LendingPool();
 
         bytes memory data = abi.encodeCall(
-            LendingPool.initialize,
-            (address(0), address(tokenB), address(oracle), address(treasury), admin)
+            LendingPool.initialize, (address(0), address(tokenB), address(oracle), address(treasury), admin)
         );
 
         vm.expectRevert(LendingPool.ZeroAddress.selector);
@@ -201,8 +185,7 @@ contract LendingPoolAdditionalCoverageTest is BaseTest {
         LendingPool impl = new LendingPool();
 
         bytes memory data = abi.encodeCall(
-            LendingPool.initialize,
-            (address(tokenA), address(0), address(oracle), address(treasury), admin)
+            LendingPool.initialize, (address(tokenA), address(0), address(oracle), address(treasury), admin)
         );
 
         vm.expectRevert(LendingPool.ZeroAddress.selector);
@@ -213,8 +196,7 @@ contract LendingPoolAdditionalCoverageTest is BaseTest {
         LendingPool impl = new LendingPool();
 
         bytes memory data = abi.encodeCall(
-            LendingPool.initialize,
-            (address(tokenA), address(tokenB), address(0), address(treasury), admin)
+            LendingPool.initialize, (address(tokenA), address(tokenB), address(0), address(treasury), admin)
         );
 
         vm.expectRevert(LendingPool.ZeroAddress.selector);
@@ -225,8 +207,7 @@ contract LendingPoolAdditionalCoverageTest is BaseTest {
         LendingPool impl = new LendingPool();
 
         bytes memory data = abi.encodeCall(
-            LendingPool.initialize,
-            (address(tokenA), address(tokenB), address(oracle), address(0), admin)
+            LendingPool.initialize, (address(tokenA), address(tokenB), address(oracle), address(0), admin)
         );
 
         vm.expectRevert(LendingPool.ZeroAddress.selector);
@@ -237,8 +218,7 @@ contract LendingPoolAdditionalCoverageTest is BaseTest {
         LendingPool impl = new LendingPool();
 
         bytes memory data = abi.encodeCall(
-            LendingPool.initialize,
-            (address(tokenA), address(tokenB), address(oracle), address(treasury), address(0))
+            LendingPool.initialize, (address(tokenA), address(tokenB), address(oracle), address(treasury), address(0))
         );
 
         vm.expectRevert(LendingPool.ZeroAddress.selector);
@@ -277,7 +257,6 @@ contract UpgradeAuthorizationAdditionalTest is BaseTest {
         lending.upgradeToAndCall(address(newImpl), "");
     }
 }
-
 
 contract GovernorCancelAdditionalTest is BaseTest {
     uint256 constant PROPOSER_AMOUNT = 1_500_000e18;
@@ -318,15 +297,11 @@ contract GovernorCancelAdditionalTest is BaseTest {
     }
 }
 
-
 contract AMMAdditionalCoverageTest is BaseTest {
     function test_amm_initialize_reverts_zeroTokenA() public {
         AMM impl = new AMM();
 
-        bytes memory data = abi.encodeCall(
-            AMM.initialize,
-            (address(0), address(tokenB), admin)
-        );
+        bytes memory data = abi.encodeCall(AMM.initialize, (address(0), address(tokenB), admin));
 
         vm.expectRevert(AMM.ZeroAddress.selector);
         new ERC1967Proxy(address(impl), data);
@@ -335,10 +310,7 @@ contract AMMAdditionalCoverageTest is BaseTest {
     function test_amm_initialize_reverts_zeroTokenB() public {
         AMM impl = new AMM();
 
-        bytes memory data = abi.encodeCall(
-            AMM.initialize,
-            (address(tokenA), address(0), admin)
-        );
+        bytes memory data = abi.encodeCall(AMM.initialize, (address(tokenA), address(0), admin));
 
         vm.expectRevert(AMM.ZeroAddress.selector);
         new ERC1967Proxy(address(impl), data);
@@ -347,10 +319,7 @@ contract AMMAdditionalCoverageTest is BaseTest {
     function test_amm_initialize_reverts_zeroAdmin() public {
         AMM impl = new AMM();
 
-        bytes memory data = abi.encodeCall(
-            AMM.initialize,
-            (address(tokenA), address(tokenB), address(0))
-        );
+        bytes memory data = abi.encodeCall(AMM.initialize, (address(tokenA), address(tokenB), address(0)));
 
         vm.expectRevert(AMM.ZeroAddress.selector);
         new ERC1967Proxy(address(impl), data);
@@ -359,10 +328,7 @@ contract AMMAdditionalCoverageTest is BaseTest {
     function test_amm_initialize_reverts_sameToken() public {
         AMM impl = new AMM();
 
-        bytes memory data = abi.encodeCall(
-            AMM.initialize,
-            (address(tokenA), address(tokenA), admin)
-        );
+        bytes memory data = abi.encodeCall(AMM.initialize, (address(tokenA), address(tokenA), admin));
 
         vm.expectRevert(AMM.InvalidToken.selector);
         new ERC1967Proxy(address(impl), data);
@@ -392,15 +358,11 @@ contract AMMAdditionalCoverageTest is BaseTest {
     }
 }
 
-
 contract GovernanceTokenInitializationAdditionalTest is BaseTest {
     function test_governanceToken_initialize_success_directProxy() public {
         GovernanceToken impl = new GovernanceToken();
 
-        bytes memory data = abi.encodeCall(
-            GovernanceToken.initialize,
-            (admin, admin, 100_000_000e18)
-        );
+        bytes memory data = abi.encodeCall(GovernanceToken.initialize, (admin, admin, 100_000_000e18));
 
         ERC1967Proxy proxy = new ERC1967Proxy(address(impl), data);
         GovernanceToken token = GovernanceToken(address(proxy));
@@ -416,10 +378,7 @@ contract GovernanceTokenInitializationAdditionalTest is BaseTest {
     function test_governanceToken_initialize_reverts_twice() public {
         GovernanceToken impl = new GovernanceToken();
 
-        bytes memory data = abi.encodeCall(
-            GovernanceToken.initialize,
-            (admin, admin, 100_000_000e18)
-        );
+        bytes memory data = abi.encodeCall(GovernanceToken.initialize, (admin, admin, 100_000_000e18));
 
         ERC1967Proxy proxy = new ERC1967Proxy(address(impl), data);
         GovernanceToken token = GovernanceToken(address(proxy));

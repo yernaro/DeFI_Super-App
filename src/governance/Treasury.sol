@@ -28,21 +28,15 @@ contract Treasury is AccessControl {
         emit EtherReceived(msg.sender, msg.value);
     }
 
-    function withdrawEther(address payable to, uint256 amount)
-        external
-        onlyRole(TREASURER_ROLE)
-    {
+    function withdrawEther(address payable to, uint256 amount) external onlyRole(TREASURER_ROLE) {
         if (to == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
-        (bool ok,) = to.call{value: amount}("");
+        (bool ok,) = to.call{ value: amount }("");
         if (!ok) revert TransferFailed();
         emit EtherWithdrawn(to, amount);
     }
 
-    function withdrawToken(address token, address to, uint256 amount)
-        external
-        onlyRole(TREASURER_ROLE)
-    {
+    function withdrawToken(address token, address to, uint256 amount) external onlyRole(TREASURER_ROLE) {
         if (to == address(0) || token == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
         IERC20(token).safeTransfer(to, amount);

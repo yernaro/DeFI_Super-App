@@ -14,11 +14,7 @@ contract BadRoundAggregator {
         return _decimals;
     }
 
-    function latestRoundData()
-        external
-        view
-        returns (uint80, int256, uint256, uint256, uint80)
-    {
+    function latestRoundData() external view returns (uint80, int256, uint256, uint256, uint80) {
         return (2, 2000e8, block.timestamp, block.timestamp, 1);
     }
 }
@@ -722,7 +718,7 @@ contract OracleTest is BaseTest {
         assertEq(price, 200000e18);
     }
 
-        function test_getPrice_reverts_zeroPriceAfterScaling() public {
+    function test_getPrice_reverts_zeroPriceAfterScaling() public {
         MockAggregator feed20 = new MockAggregator(20, 1);
 
         vm.prank(admin);
@@ -760,7 +756,7 @@ contract TreasuryTest is BaseTest {
         vm.deal(alice, 1 ether);
 
         vm.prank(alice);
-        (bool ok,) = address(treasury).call{value: 1 ether}("");
+        (bool ok,) = address(treasury).call{ value: 1 ether }("");
 
         assertTrue(ok);
         assertEq(treasury.ethBalance(), 1 ether);

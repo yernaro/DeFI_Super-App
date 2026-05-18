@@ -16,8 +16,8 @@ contract ChainlinkOracle is AccessControl {
 
     struct FeedConfig {
         AggregatorV3Interface feed;
-        uint32 maxStaleness; 
-        uint8  decimals;
+        uint32 maxStaleness;
+        uint8 decimals;
     }
 
     mapping(address token => FeedConfig config) private _feeds;
@@ -38,7 +38,6 @@ contract ChainlinkOracle is AccessControl {
         _grantRole(ORACLE_ADMIN, admin);
     }
 
-
     function setFeed(address token, address feed, uint32 maxStaleness) external onlyRole(ORACLE_ADMIN) {
         if (token == address(0) || feed == address(0)) revert ZeroAddress();
         uint8 dec = AggregatorV3Interface(feed).decimals();
@@ -51,13 +50,11 @@ contract ChainlinkOracle is AccessControl {
         emit FeedRemoved(token);
     }
 
-
     function getPrice(address token) external view returns (uint256 price18) {
         FeedConfig storage cfg = _feeds[token];
         if (address(cfg.feed) == address(0)) revert FeedNotSet(token);
 
-        (uint80 roundId, int256 answer, , uint256 updatedAt, uint80 answeredInRound) =
-            cfg.feed.latestRoundData();
+        (uint80 roundId, int256 answer,, uint256 updatedAt, uint80 answeredInRound) = cfg.feed.latestRoundData();
 
         if (block.timestamp - updatedAt > cfg.maxStaleness) {
             revert StalePrice(token, updatedAt, cfg.maxStaleness);

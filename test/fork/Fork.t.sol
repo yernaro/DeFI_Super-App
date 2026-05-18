@@ -13,14 +13,18 @@ import "../../src/vault/YieldVault.sol";
 contract ForkTest is Test {
     using SafeERC20 for IERC20;
 
-    address constant USDC        = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address constant WETH        = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant USDC_HOLDER = 0x28C6c06298d514Db089934071355E5743bf21d60;
 
     address constant ETH_USD_FEED = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
 
     function _selectMainnetForkOrSkip() internal {
         string memory rpc = vm.envOr("MAINNET_RPC", string(""));
+
+        if (bytes(rpc).length == 0) {
+            rpc = vm.envOr("MAINNET_RPC_URL", string(""));
+        }
 
         if (bytes(rpc).length == 0) {
             vm.skip(true);
@@ -55,10 +59,8 @@ contract ForkTest is Test {
 
         YieldVault vaultImpl = new YieldVault();
 
-        bytes memory initData = abi.encodeCall(
-            YieldVault.initialize,
-            (USDC, "USDC Yield Vault", "yvUSDC", 500, treasury, admin)
-        );
+        bytes memory initData =
+            abi.encodeCall(YieldVault.initialize, (USDC, "USDC Yield Vault", "yvUSDC", 500, treasury, admin));
 
         ERC1967Proxy proxy = new ERC1967Proxy(address(vaultImpl), initData);
         YieldVault vault = YieldVault(address(proxy));
@@ -92,10 +94,7 @@ contract ForkTest is Test {
 
         AMM ammImpl = new AMM();
 
-        bytes memory initData = abi.encodeCall(
-            AMM.initialize,
-            (USDC, WETH, admin)
-        );
+        bytes memory initData = abi.encodeCall(AMM.initialize, (USDC, WETH, admin));
 
         ERC1967Proxy proxy = new ERC1967Proxy(address(ammImpl), initData);
         AMM localAmm = AMM(address(proxy));

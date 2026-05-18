@@ -42,7 +42,7 @@ contract Deploy is Script {
         address tokenB;
         address feedA;
         address feedB;
-        uint32  feedStaleness;
+        uint32 feedStaleness;
         uint256 govMaxSupply;
         uint256 vaultPerfFee;
     }
@@ -66,7 +66,7 @@ contract Deploy is Script {
     function run() external {
         DeployConfig memory cfg = _loadConfig();
         uint256 deployerKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
-        address deployer    = vm.addr(deployerKey);
+        address deployer = vm.addr(deployerKey);
 
         vm.startBroadcast(deployerKey);
 
@@ -79,20 +79,17 @@ contract Deploy is Script {
     }
 
     function _loadConfig() private view returns (DeployConfig memory cfg) {
-        cfg.admin         = vm.envAddress("ADMIN_ADDRESS");
-        cfg.tokenA        = vm.envAddress("TOKEN_A");
-        cfg.tokenB        = vm.envAddress("TOKEN_B");
-        cfg.feedA         = vm.envAddress("CHAINLINK_FEED_A");
-        cfg.feedB         = vm.envAddress("CHAINLINK_FEED_B");
+        cfg.admin = vm.envAddress("ADMIN_ADDRESS");
+        cfg.tokenA = vm.envAddress("TOKEN_A");
+        cfg.tokenB = vm.envAddress("TOKEN_B");
+        cfg.feedA = vm.envAddress("CHAINLINK_FEED_A");
+        cfg.feedB = vm.envAddress("CHAINLINK_FEED_B");
         cfg.feedStaleness = uint32(vm.envUint("FEED_STALENESS"));
-        cfg.govMaxSupply  = vm.envUint("GOV_TOKEN_MAX_SUPPLY");
-        cfg.vaultPerfFee  = vm.envUint("VAULT_PERF_FEE");
+        cfg.govMaxSupply = vm.envUint("GOV_TOKEN_MAX_SUPPLY");
+        cfg.vaultPerfFee = vm.envUint("VAULT_PERF_FEE");
     }
 
-    function _deploy(DeployConfig memory cfg, address deployer)
-        private
-        returns (DeployedAddresses memory addrs)
-    {
+    function _deploy(DeployConfig memory cfg, address deployer) private returns (DeployedAddresses memory addrs) {
         // ── 1. Oracle ─────────────────────────────────────────────────────────
         ChainlinkOracle oracle = new ChainlinkOracle(cfg.admin);
         oracle.setFeed(cfg.tokenA, cfg.feedA, cfg.feedStaleness);
@@ -104,10 +101,7 @@ contract Deploy is Script {
         addrs.govTokenImpl = address(govImpl);
 
         // Temporarily set deployer as minter; Timelock takes over after setup
-        bytes memory govInitData = abi.encodeCall(
-            GovernanceToken.initialize,
-            (cfg.admin, deployer, cfg.govMaxSupply)
-        );
+        bytes memory govInitData = abi.encodeCall(GovernanceToken.initialize, (cfg.admin, deployer, cfg.govMaxSupply));
         ERC1967Proxy govProxy = new ERC1967Proxy(address(govImpl), govInitData);
         addrs.govTokenProxy = address(govProxy);
 
@@ -120,19 +114,16 @@ contract Deploy is Script {
             2 days,
             proposers,
             executors,
-            cfg.admin  // admin can manage roles during setup
+            cfg.admin // admin can manage roles during setup
         );
         addrs.timelock = address(timelock);
 
         // ── 4. Governor ───────────────────────────────────────────────────────
-        DeFiGovernor governor = new DeFiGovernor(
-            IVotes(addrs.govTokenProxy),
-            timelock
-        );
+        DeFiGovernor governor = new DeFiGovernor(IVotes(addrs.govTokenProxy), timelock);
         addrs.governor = address(governor);
 
         // Wire governor as proposer/canceller on Timelock
-        timelock.grantRole(timelock.PROPOSER_ROLE(),  address(governor));
+        timelock.grantRole(timelock.PROPOSER_ROLE(), address(governor));
         timelock.grantRole(timelock.CANCELLER_ROLE(), address(governor));
         // Revoke deployer's admin — Timelock is now self-governed
         // (keep cfg.admin as backup admin for emergency during testnet phase)
@@ -156,8 +147,7 @@ contract Deploy is Script {
         addrs.lendingImpl = address(lendingImpl);
 
         bytes memory lendingInitData = abi.encodeCall(
-            LendingPool.initialize,
-            (cfg.tokenA, cfg.tokenB, address(oracle), address(treasury), cfg.admin)
+            LendingPool.initialize, (cfg.tokenA, cfg.tokenB, address(oracle), address(treasury), cfg.admin)
         );
         ERC1967Proxy lendingProxy = new ERC1967Proxy(address(lendingImpl), lendingInitData);
         addrs.lendingProxy = address(lendingProxy);
@@ -180,23 +170,51 @@ contract Deploy is Script {
     }
 
     function _writeAddresses(DeployedAddresses memory addrs) private {
-        string memory json = string(abi.encodePacked(
-            '{\n',
-            '  "oracle":         "', vm.toString(addrs.oracle),        '",\n',
-            '  "govTokenImpl":   "', vm.toString(addrs.govTokenImpl),  '",\n',
-            '  "govToken":       "', vm.toString(addrs.govTokenProxy), '",\n',
-            '  "timelock":       "', vm.toString(addrs.timelock),      '",\n',
-            '  "governor":       "', vm.toString(addrs.governor),      '",\n',
-            '  "treasury":       "', vm.toString(addrs.treasury),      '",\n',
-            '  "ammImpl":        "', vm.toString(addrs.ammImpl),       '",\n',
-            '  "ammFactory":     "', vm.toString(addrs.ammFactory),    '",\n',
-            '  "ammPair":        "', vm.toString(addrs.ammPair),       '",\n',
-            '  "lendingImpl":    "', vm.toString(addrs.lendingImpl),   '",\n',
-            '  "lending":        "', vm.toString(addrs.lendingProxy),  '",\n',
-            '  "vaultImpl":      "', vm.toString(addrs.vaultImpl),     '",\n',
-            '  "vault":          "', vm.toString(addrs.vaultProxy),    '"\n',
-            '}'
-        ));
+        string memory json = string(
+            abi.encodePacked(
+                "{\n",
+                '  "oracle":         "',
+                vm.toString(addrs.oracle),
+                '",\n',
+                '  "govTokenImpl":   "',
+                vm.toString(addrs.govTokenImpl),
+                '",\n',
+                '  "govToken":       "',
+                vm.toString(addrs.govTokenProxy),
+                '",\n',
+                '  "timelock":       "',
+                vm.toString(addrs.timelock),
+                '",\n',
+                '  "governor":       "',
+                vm.toString(addrs.governor),
+                '",\n',
+                '  "treasury":       "',
+                vm.toString(addrs.treasury),
+                '",\n',
+                '  "ammImpl":        "',
+                vm.toString(addrs.ammImpl),
+                '",\n',
+                '  "ammFactory":     "',
+                vm.toString(addrs.ammFactory),
+                '",\n',
+                '  "ammPair":        "',
+                vm.toString(addrs.ammPair),
+                '",\n',
+                '  "lendingImpl":    "',
+                vm.toString(addrs.lendingImpl),
+                '",\n',
+                '  "lending":        "',
+                vm.toString(addrs.lendingProxy),
+                '",\n',
+                '  "vaultImpl":      "',
+                vm.toString(addrs.vaultImpl),
+                '",\n',
+                '  "vault":          "',
+                vm.toString(addrs.vaultProxy),
+                '"\n',
+                "}"
+            )
+        );
         vm.writeFile("./deployments/addresses.json", json);
     }
 

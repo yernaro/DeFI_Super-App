@@ -48,11 +48,7 @@ contract AMMFactory is Ownable {
     /// @notice Deploy a new AMM pair for (tokenA, tokenB) using CREATE2.
     ///         The salt is derived from the token addresses, making the pair
     ///         address predictable before deployment.
-    function createPairDeterministic(address tokenA, address tokenB)
-        external
-        onlyOwner
-        returns (address pair)
-    {
+    function createPairDeterministic(address tokenA, address tokenB) external onlyOwner returns (address pair) {
         (tokenA, tokenB) = _sortTokens(tokenA, tokenB);
         _checkPreCreate(tokenA, tokenB);
 
@@ -60,7 +56,7 @@ contract AMMFactory is Ownable {
         bytes memory initData = abi.encodeCall(AMM.initialize, (tokenA, tokenB, owner()));
 
         // CREATE2: deterministic address
-        pair = address(new ERC1967Proxy{salt: salt}(ammImplementation, initData));
+        pair = address(new ERC1967Proxy{ salt: salt }(ammImplementation, initData));
 
         _register(tokenA, tokenB, pair);
     }

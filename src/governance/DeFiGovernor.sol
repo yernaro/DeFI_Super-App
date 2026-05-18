@@ -19,14 +19,14 @@ contract DeFiGovernor is
     constructor(IVotes _token, TimelockController _timelock)
         Governor("DeFiSuperApp Governor")
         GovernorSettings(
-            1 days,   // voting delay
-            1 weeks,  // voting period
-            0         // proposal threshold in raw votes (overridden below)
+            1 days, // voting delay
+            1 weeks, // voting period
+            0 // proposal threshold in raw votes (overridden below)
         )
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(4) // 4 %
         GovernorTimelockControl(_timelock)
-    {}
+    { }
 
     function proposalThreshold() public view override(Governor, GovernorSettings) returns (uint256) {
         return token().getPastTotalSupply(block.number - 1) / 100;
@@ -40,21 +40,11 @@ contract DeFiGovernor is
         return super.votingPeriod();
     }
 
-    function quorum(uint256 blockNumber)
-        public
-        view
-        override(Governor, GovernorVotesQuorumFraction)
-        returns (uint256)
-    {
+    function quorum(uint256 blockNumber) public view override(Governor, GovernorVotesQuorumFraction) returns (uint256) {
         return super.quorum(blockNumber);
     }
 
-    function state(uint256 proposalId)
-        public
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (ProposalState)
-    {
+    function state(uint256 proposalId) public view override(Governor, GovernorTimelockControl) returns (ProposalState) {
         return super.state(proposalId);
     }
 
@@ -96,21 +86,11 @@ contract DeFiGovernor is
         return super._cancel(targets, values, calldatas, descriptionHash);
     }
 
-    function _executor()
-        internal
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (address)
-    {
+    function _executor() internal view override(Governor, GovernorTimelockControl) returns (address) {
         return super._executor();
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(Governor)
-        returns (bool)
-    {
-    return super.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view override(Governor) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 }

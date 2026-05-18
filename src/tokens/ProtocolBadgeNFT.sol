@@ -25,12 +25,10 @@ contract ProtocolBadgeNFT is Initializable, ERC721Upgradeable, AccessControlUpgr
         _disableInitializers();
     }
 
-    function initialize(
-        address admin,
-        address minter,
-        uint256 _maxSupply,
-        string calldata baseURI_
-    ) external initializer {
+    function initialize(address admin, address minter, uint256 _maxSupply, string calldata baseURI_)
+        external
+        initializer
+    {
         if (admin == address(0) || minter == address(0)) revert ZeroAddress();
         if (_maxSupply == 0) revert ZeroAmount();
 
@@ -63,7 +61,7 @@ contract ProtocolBadgeNFT is Initializable, ERC721Upgradeable, AccessControlUpgr
         emit BaseURIUpdated(baseURI_);
     }
 
-    function _authorizeUpgrade(address newImpl) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address newImpl) internal override onlyRole(UPGRADER_ROLE) { }
 
     function supportsInterface(bytes4 interfaceId)
         public

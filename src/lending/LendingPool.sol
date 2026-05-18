@@ -20,38 +20,42 @@ contract LendingPool is
 {
     using SafeERC20 for IERC20;
 
-    uint256 public constant PRECISION         = 1e18;
-    uint256 public constant LTV               = 75e16;  
-    uint256 public constant LIQ_THRESHOLD     = 80e16;  
-    uint256 public constant LIQ_BONUS         = 5e16;   
-    uint256 public constant BASE_RATE         = 2e16;   
-    uint256 public constant SLOPE             = 10e16;  
-    uint256 public constant SECONDS_PER_YEAR  = 365 days;
-    uint256 public constant PROTOCOL_FEE      = 10e16; 
+    uint256 public constant PRECISION = 1e18;
+    uint256 public constant LTV = 75e16;
+    uint256 public constant LIQ_THRESHOLD = 80e16;
+    uint256 public constant LIQ_BONUS = 5e16;
+    uint256 public constant BASE_RATE = 2e16;
+    uint256 public constant SLOPE = 10e16;
+    uint256 public constant SECONDS_PER_YEAR = 365 days;
+    uint256 public constant PROTOCOL_FEE = 10e16;
 
-    bytes32 public constant PAUSER_ROLE   = keccak256("PAUSER_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
-    bytes32 public constant RISK_ADMIN    = keccak256("RISK_ADMIN");
+    bytes32 public constant RISK_ADMIN = keccak256("RISK_ADMIN");
 
-    enum PositionState { None, Active, Liquidated }
+    enum PositionState {
+        None,
+        Active,
+        Liquidated
+    }
 
     struct Position {
-        uint256 collateralAmount; 
-        uint256 debtAmount;       
-        uint256 interestIndex;    
+        uint256 collateralAmount;
+        uint256 debtAmount;
+        uint256 interestIndex;
         PositionState state;
     }
 
-    IERC20          public collateralToken; 
-    IERC20          public debtToken;       
+    IERC20 public collateralToken;
+    IERC20 public debtToken;
     ChainlinkOracle public oracle;
-    address         public treasury;
+    address public treasury;
 
     uint256 public totalCollateral;
     uint256 public totalDebt;
-    uint256 public totalReserves; 
+    uint256 public totalReserves;
 
-    uint256 public cumulativeInterestIndex; 
+    uint256 public cumulativeInterestIndex;
     uint256 public lastAccrualTimestamp;
 
     mapping(address => Position) public positions;
@@ -61,10 +65,7 @@ contract LendingPool is
     event Borrowed(address indexed user, uint256 amount);
     event Repaid(address indexed user, uint256 amount, uint256 interest);
     event Liquidated(
-        address indexed liquidator,
-        address indexed borrower,
-        uint256 debtRepaid,
-        uint256 collateralSeized
+        address indexed liquidator, address indexed borrower, uint256 debtRepaid, uint256 collateralSeized
     );
     event InterestAccrued(uint256 newIndex, uint256 interestAccrued);
     event ReservesWithdrawn(address indexed treasury, uint256 amount);
@@ -79,18 +80,18 @@ contract LendingPool is
     error InsufficientPoolLiquidity();
     error InvalidAmount();
 
-    constructor() { _disableInitializers(); }
+    constructor() {
+        _disableInitializers();
+    }
 
-    function initialize(
-        address _collateralToken,
-        address _debtToken,
-        address _oracle,
-        address _treasury,
-        address admin
-    ) external initializer {
-        if (_collateralToken == address(0) || _debtToken == address(0)
-            || _oracle == address(0) || _treasury == address(0) || admin == address(0))
-        {
+    function initialize(address _collateralToken, address _debtToken, address _oracle, address _treasury, address admin)
+        external
+        initializer
+    {
+        if (
+            _collateralToken == address(0) || _debtToken == address(0) || _oracle == address(0)
+                || _treasury == address(0) || admin == address(0)
+        ) {
             revert ZeroAddress();
         }
 
@@ -100,17 +101,17 @@ contract LendingPool is
         __AccessControl_init();
 
         collateralToken = IERC20(_collateralToken);
-        debtToken       = IERC20(_debtToken);
-        oracle          = ChainlinkOracle(_oracle);
-        treasury        = _treasury;
+        debtToken = IERC20(_debtToken);
+        oracle = ChainlinkOracle(_oracle);
+        treasury = _treasury;
 
-        cumulativeInterestIndex = 1e27; 
-        lastAccrualTimestamp    = block.timestamp;
+        cumulativeInterestIndex = 1e27;
+        lastAccrualTimestamp = block.timestamp;
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        _grantRole(PAUSER_ROLE,   admin);
+        _grantRole(PAUSER_ROLE, admin);
         _grantRole(UPGRADER_ROLE, admin);
-        _grantRole(RISK_ADMIN,    admin);
+        _grantRole(RISK_ADMIN, admin);
     }
 
     function accrueInterest() public {
@@ -118,8 +119,8 @@ contract LendingPool is
         if (elapsed == 0) return;
 
         uint256 utilization = totalDebt == 0 ? 0 : totalDebt * PRECISION / (totalDebt + _poolLiquidity());
-        uint256 annualRate  = BASE_RATE + MathUtils.mulDiv(SLOPE, utilization, PRECISION);
-        uint256 interest    = MathUtils.mulDiv(totalDebt, annualRate * elapsed, SECONDS_PER_YEAR * PRECISION);
+        uint256 annualRate = BASE_RATE + MathUtils.mulDiv(SLOPE, utilization, PRECISION);
+        uint256 interest = MathUtils.mulDiv(totalDebt, annualRate * elapsed, SECONDS_PER_YEAR * PRECISION);
 
         if (interest == 0) {
             lastAccrualTimestamp = block.timestamp;
@@ -128,7 +129,7 @@ contract LendingPool is
 
         uint256 protocolCut = MathUtils.mulDiv(interest, PROTOCOL_FEE, PRECISION);
         totalReserves += protocolCut;
-        totalDebt     += interest;
+        totalDebt += interest;
 
         cumulativeInterestIndex = cumulativeInterestIndex
             + MathUtils.mulDiv(cumulativeInterestIndex, annualRate * elapsed, SECONDS_PER_YEAR * PRECISION);
@@ -137,23 +138,21 @@ contract LendingPool is
         emit InterestAccrued(cumulativeInterestIndex, interest);
     }
 
-
     function depositCollateral(uint256 amount) external nonReentrant whenNotPaused {
         if (amount == 0) revert ZeroAmount();
         accrueInterest();
 
         Position storage pos = positions[msg.sender];
         if (pos.state == PositionState.None) {
-            pos.state         = PositionState.Active;
+            pos.state = PositionState.Active;
             pos.interestIndex = cumulativeInterestIndex;
         }
         pos.collateralAmount += amount;
-        totalCollateral      += amount;
+        totalCollateral += amount;
 
         collateralToken.safeTransferFrom(msg.sender, address(this), amount);
         emit CollateralDeposited(msg.sender, amount);
     }
-
 
     function withdrawCollateral(uint256 amount) external nonReentrant whenNotPaused {
         if (amount == 0) revert ZeroAmount();
@@ -163,14 +162,13 @@ contract LendingPool is
         if (amount > pos.collateralAmount) revert InsufficientCollateral();
 
         pos.collateralAmount -= amount;
-        totalCollateral      -= amount;
+        totalCollateral -= amount;
 
         if (pos.debtAmount > 0 && _healthFactor(pos) < PRECISION) revert InsufficientCollateral();
 
         collateralToken.safeTransfer(msg.sender, amount);
         emit CollateralWithdrawn(msg.sender, amount);
     }
-
 
     function borrow(uint256 amount) external nonReentrant whenNotPaused {
         if (amount == 0) revert ZeroAmount();
@@ -179,16 +177,15 @@ contract LendingPool is
         if (pos.state != PositionState.Active) revert NoPosition();
         if (amount > _poolLiquidity()) revert InsufficientPoolLiquidity();
 
-        pos.debtAmount   += amount;
+        pos.debtAmount += amount;
         pos.interestIndex = cumulativeInterestIndex;
-        totalDebt        += amount;
+        totalDebt += amount;
 
         if (_healthFactor(pos) < PRECISION) revert ExceedsLTV();
 
         debtToken.safeTransfer(msg.sender, amount);
         emit Borrowed(msg.sender, amount);
     }
-
 
     function repay(uint256 amount) external nonReentrant whenNotPaused {
         if (amount == 0) revert ZeroAmount();
@@ -198,12 +195,12 @@ contract LendingPool is
 
         uint256 currentDebt = _currentDebt(pos);
         uint256 repayAmount = amount > currentDebt ? currentDebt : amount;
-        uint256 interest    = currentDebt - pos.debtAmount;
-        uint256 principal   = repayAmount > interest ? repayAmount - interest : 0;
+        uint256 interest = currentDebt - pos.debtAmount;
+        uint256 principal = repayAmount > interest ? repayAmount - interest : 0;
 
-        pos.debtAmount    = pos.debtAmount > principal ? pos.debtAmount - principal : 0;
+        pos.debtAmount = pos.debtAmount > principal ? pos.debtAmount - principal : 0;
         pos.interestIndex = cumulativeInterestIndex;
-        totalDebt         = totalDebt > repayAmount ? totalDebt - repayAmount : 0;
+        totalDebt = totalDebt > repayAmount ? totalDebt - repayAmount : 0;
 
         debtToken.safeTransferFrom(msg.sender, address(this), repayAmount);
         emit Repaid(msg.sender, repayAmount, interest);
@@ -214,15 +211,15 @@ contract LendingPool is
         accrueInterest();
         Position storage pos = positions[borrower];
         if (pos.state != PositionState.Active) revert NoPosition();
-        if (_healthFactor(pos) >= PRECISION)   revert HealthyPosition();
+        if (_healthFactor(pos) >= PRECISION) revert HealthyPosition();
 
         uint256 currentDebt = _currentDebt(pos);
         uint256 maxRepay = currentDebt / 2 + (currentDebt % 2);
         if (debtToRepay > maxRepay) debtToRepay = maxRepay;
 
         uint256 collateralPrice = oracle.getPrice(address(collateralToken));
-        uint256 debtPrice       = oracle.getPrice(address(debtToken));
-        uint256 debtValue       = MathUtils.mulDiv(debtToRepay, debtPrice, PRECISION);
+        uint256 debtPrice = oracle.getPrice(address(debtToken));
+        uint256 debtValue = MathUtils.mulDiv(debtToRepay, debtPrice, PRECISION);
         uint256 collateralSeize = MathUtils.mulDiv(debtValue, PRECISION + LIQ_BONUS, collateralPrice);
 
         if (collateralSeize > pos.collateralAmount) {
@@ -230,12 +227,13 @@ contract LendingPool is
         }
 
         pos.collateralAmount -= collateralSeize;
-        totalCollateral      -= collateralSeize;
+        totalCollateral -= collateralSeize;
 
-        uint256 principal = debtToRepay > (currentDebt - pos.debtAmount) ? debtToRepay - (currentDebt - pos.debtAmount) : 0;
-        pos.debtAmount    = pos.debtAmount > principal ? pos.debtAmount - principal : 0;
+        uint256 principal =
+            debtToRepay > (currentDebt - pos.debtAmount) ? debtToRepay - (currentDebt - pos.debtAmount) : 0;
+        pos.debtAmount = pos.debtAmount > principal ? pos.debtAmount - principal : 0;
         pos.interestIndex = cumulativeInterestIndex;
-        totalDebt         = totalDebt > debtToRepay ? totalDebt - debtToRepay : 0;
+        totalDebt = totalDebt > debtToRepay ? totalDebt - debtToRepay : 0;
 
         if (pos.debtAmount == 0 && pos.collateralAmount == 0) {
             pos.state = PositionState.Liquidated;
@@ -272,15 +270,20 @@ contract LendingPool is
         debtToken.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function pause()   external onlyRole(PAUSER_ROLE) { _pause(); }
-    function unpause() external onlyRole(PAUSER_ROLE) { _unpause(); }
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
 
     function _healthFactor(Position storage pos) private view returns (uint256) {
         if (pos.debtAmount == 0) return type(uint256).max;
         uint256 collateralPrice = oracle.getPrice(address(collateralToken));
-        uint256 debtPrice       = oracle.getPrice(address(debtToken));
+        uint256 debtPrice = oracle.getPrice(address(debtToken));
         uint256 collateralValue = MathUtils.mulDiv(pos.collateralAmount, collateralPrice, PRECISION);
-        uint256 debtValue       = MathUtils.mulDiv(_currentDebt(pos), debtPrice, PRECISION);
+        uint256 debtValue = MathUtils.mulDiv(_currentDebt(pos), debtPrice, PRECISION);
         uint256 liqThresholdValue = MathUtils.mulDiv(collateralValue, LIQ_THRESHOLD, PRECISION);
         return MathUtils.mulDiv(liqThresholdValue, PRECISION, debtValue);
     }
@@ -294,5 +297,5 @@ contract LendingPool is
         return debtToken.balanceOf(address(this));
     }
 
-    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) { }
 }

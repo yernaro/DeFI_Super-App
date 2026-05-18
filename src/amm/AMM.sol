@@ -32,26 +32,26 @@ contract AMM is
     // ─────────────────────────────────────────────────────────────────────────
     // Constants
     // ─────────────────────────────────────────────────────────────────────────
-    uint256 public constant FEE_NUMERATOR   = 3;
+    uint256 public constant FEE_NUMERATOR = 3;
     uint256 public constant FEE_DENOMINATOR = 1000; // 0.3 %
     uint256 public constant MINIMUM_LIQUIDITY = 1000; // locked forever
 
     // ─────────────────────────────────────────────────────────────────────────
     // Roles
     // ─────────────────────────────────────────────────────────────────────────
-    bytes32 public constant PAUSER_ROLE   = keccak256("PAUSER_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
     // ─────────────────────────────────────────────────────────────────────────
     // Storage — V1 (never reorder; only append for V2+)
     // ─────────────────────────────────────────────────────────────────────────
-    IERC20  public tokenA;
-    IERC20  public tokenB;
+    IERC20 public tokenA;
+    IERC20 public tokenB;
     LPToken public lpToken;
 
     uint112 private _reserveA;
     uint112 private _reserveB;
-    uint32  private _blockTimestampLast;
+    uint32 private _blockTimestampLast;
 
     uint256 public price0CumulativeLast;
     uint256 public price1CumulativeLast;
@@ -62,13 +62,7 @@ contract AMM is
     // ─────────────────────────────────────────────────────────────────────────
     event LiquidityAdded(address indexed provider, uint256 amountA, uint256 amountB, uint256 lpMinted);
     event LiquidityRemoved(address indexed provider, uint256 amountA, uint256 amountB, uint256 lpBurned);
-    event Swap(
-        address indexed sender,
-        uint256 amountIn,
-        uint256 amountOut,
-        bool    aToB,
-        address indexed recipient
-    );
+    event Swap(address indexed sender, uint256 amountIn, uint256 amountOut, bool aToB, address indexed recipient);
     event Sync(uint112 reserveA, uint112 reserveB);
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -84,16 +78,14 @@ contract AMM is
     error Overflow();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() { _disableInitializers(); }
+    constructor() {
+        _disableInitializers();
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Initializer
     // ─────────────────────────────────────────────────────────────────────────
-    function initialize(
-        address _tokenA,
-        address _tokenB,
-        address admin
-    ) external initializer {
+    function initialize(address _tokenA, address _tokenB, address admin) external initializer {
         if (_tokenA == address(0) || _tokenB == address(0) || admin == address(0)) revert ZeroAddress();
         if (_tokenA == _tokenB) revert InvalidToken();
 
@@ -106,14 +98,10 @@ contract AMM is
         tokenB = IERC20(_tokenB);
 
         // Deploy LP token owned by this contract
-        lpToken = new LPToken(
-            string(abi.encodePacked("DSA-LP")),
-            string(abi.encodePacked("DSA-LP")),
-            address(this)
-        );
+        lpToken = new LPToken(string(abi.encodePacked("DSA-LP")), string(abi.encodePacked("DSA-LP")), address(this));
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        _grantRole(PAUSER_ROLE,   admin);
+        _grantRole(PAUSER_ROLE, admin);
         _grantRole(UPGRADER_ROLE, admin);
     }
 
@@ -137,8 +125,8 @@ contract AMM is
         if (reserveIn == 0 || reserveOut == 0) revert InsufficientLiquidity();
 
         uint256 amountInWithFee = amountIn * (FEE_DENOMINATOR - FEE_NUMERATOR); // 997
-        uint256 numerator       = amountInWithFee * reserveOut;
-        uint256 denominator     = reserveIn * FEE_DENOMINATOR + amountInWithFee;
+        uint256 numerator = amountInWithFee * reserveOut;
+        uint256 denominator = reserveIn * FEE_DENOMINATOR + amountInWithFee;
         amountOut = numerator / denominator;
     }
 
@@ -152,7 +140,7 @@ contract AMM is
         if (reserveIn == 0 || reserveOut == 0) revert InsufficientLiquidity();
         if (amountOut >= reserveOut) revert InsufficientLiquidity();
 
-        uint256 numerator   = reserveIn * amountOut * FEE_DENOMINATOR;
+        uint256 numerator = reserveIn * amountOut * FEE_DENOMINATOR;
         uint256 denominator = (reserveOut - amountOut) * (FEE_DENOMINATOR - FEE_NUMERATOR);
         amountIn = numerator / denominator + 1;
     }
@@ -169,12 +157,7 @@ contract AMM is
     /// @return amountA   Actual tokenA deposited.
     /// @return amountB   Actual tokenB deposited.
     /// @return lp        LP tokens minted.
-    function addLiquidity(
-        uint256 amountADesired,
-        uint256 amountBDesired,
-        uint256 amountAMin,
-        uint256 amountBMin
-    )
+    function addLiquidity(uint256 amountADesired, uint256 amountBDesired, uint256 amountAMin, uint256 amountBMin)
         external
         nonReentrant
         whenNotPaused
@@ -227,11 +210,7 @@ contract AMM is
     // ─────────────────────────────────────────────────────────────────────────
 
     /// @notice Burn LP tokens to receive proportional tokenA and tokenB.
-    function removeLiquidity(
-        uint256 lpAmount,
-        uint256 amountAMin,
-        uint256 amountBMin
-    )
+    function removeLiquidity(uint256 lpAmount, uint256 amountAMin, uint256 amountBMin)
         external
         nonReentrant
         whenNotPaused
@@ -268,12 +247,7 @@ contract AMM is
     /// @param minAmountOut Minimum output (slippage protection).
     /// @param aToB        Direction: true = tokenA → tokenB; false = tokenB → tokenA.
     /// @param recipient   Recipient of output tokens.
-    function swap(
-        uint256 amountIn,
-        uint256 minAmountOut,
-        bool    aToB,
-        address recipient
-    )
+    function swap(uint256 amountIn, uint256 minAmountOut, bool aToB, address recipient)
         external
         nonReentrant
         whenNotPaused
@@ -297,7 +271,7 @@ contract AMM is
         }
 
         // ── Interactions ────────────────────────────────────────────────────
-        IERC20 tokenIn  = aToB ? tokenA : tokenB;
+        IERC20 tokenIn = aToB ? tokenA : tokenB;
         IERC20 tokenOut = aToB ? tokenB : tokenA;
         tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
         tokenOut.safeTransfer(recipient, amountOut);
@@ -308,8 +282,13 @@ contract AMM is
     // ─────────────────────────────────────────────────────────────────────────
     // Circuit breaker
     // ─────────────────────────────────────────────────────────────────────────
-    function pause()   external onlyRole(PAUSER_ROLE) { _pause(); }
-    function unpause() external onlyRole(PAUSER_ROLE) { _unpause(); }
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Internals
@@ -323,15 +302,11 @@ contract AMM is
 
     /// @dev Proportional quote: given amount of one token, how much of the other
     ///      at the current reserves ratio?
-    function _quote(uint256 amountA, uint256 reserveA, uint256 reserveB)
-        private
-        pure
-        returns (uint256 amountB)
-    {
+    function _quote(uint256 amountA, uint256 reserveA, uint256 reserveB) private pure returns (uint256 amountB) {
         if (amountA == 0) revert ZeroAmount();
         if (reserveA == 0 || reserveB == 0) revert InsufficientLiquidity();
         amountB = amountA * reserveB / reserveA;
     }
 
-    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) {}
+    function _authorizeUpgrade(address) internal override onlyRole(UPGRADER_ROLE) { }
 }
