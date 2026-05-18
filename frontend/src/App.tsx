@@ -105,6 +105,7 @@ function WalletBar() {
 // Dashboard overview cards
 // ─────────────────────────────────────────────────────────────────────────────
 function DashboardPanel() {
+  const { address } = useAccount();
   const gov     = useGovTokenData();
   const pool    = usePoolData();
   const lending = useLendingPosition();
@@ -119,7 +120,6 @@ function DashboardPanel() {
   const hfColor = hf && hf < 11n * 10n ** 17n ? "#ef4444" : "#10b981";
 
   async function selfDelegate() {
-    const { address } = useAccount();
     if (!address) return;
     const hash = await delegate(address);
     if (!hash) setDelErr(govError);
@@ -135,7 +135,7 @@ function DashboardPanel() {
         <Row label="Total Supply"  value={`${fmt(gov.totalSupply)} / ${fmt(gov.maxSupply)}`} />
         {delErr && <div style={{ color:"#ef4444", fontSize:12 }}>{delErr}</div>}
         <button
-          onClick={() => {}}   /* wired below via useAccount inside App */
+          onClick={selfDelegate}
           style={btnStyle("#6366f1")}
           disabled={govPending}
         >

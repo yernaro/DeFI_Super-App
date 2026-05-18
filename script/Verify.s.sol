@@ -11,121 +11,117 @@ import "../src/vault/YieldVault.sol";
 import "../src/amm/AMM.sol";
 import "../src/oracles/ChainlinkOracle.sol";
 
-/// @title Verify
-/// @notice Post-deployment sanity checks. Reads addresses.json and verifies:
-///         - Timelock is the Timelock admin of all contracts
-///         - Timelock delay is 2 days
-///         - Governor parameters match spec
-///         - No admin backdoor remains (deployer has no lingering roles)
-///         Run: forge script script/Verify.s.sol --rpc-url $RPC -vvvv
 contract Verify is Script {
     uint256 constant EXPECTED_TIMELOCK_DELAY = 2 days;
-    uint256 constant EXPECTED_VOTING_DELAY   = 1 days;
-    uint256 constant EXPECTED_VOTING_PERIOD  = 1 weeks;
-    uint256 constant EXPECTED_QUORUM_PCT     = 4;
+    uint256 constant EXPECTED_VOTING_DELAY = 1 days;
+    uint256 constant EXPECTED_VOTING_PERIOD = 1 weeks;
+    uint256 constant EXPECTED_QUORUM_PCT = 4;
 
     bool private _allPassed = true;
 
-    function run() external view {
-        // ── Load addresses ────────────────────────────────────────────────────
-        string memory raw  = vm.readFile("./deployments/addresses.json");
-        address oracle       = vm.parseJsonAddress(raw, ".oracle");
-        address govToken     = vm.parseJsonAddress(raw, ".govToken");
+    function run() external {
+        string memory raw = vm.readFile("./deployments/addresses.json");
+
+        address oracle = vm.parseJsonAddress(raw, ".oracle");
+        address govToken = vm.parseJsonAddress(raw, ".govToken");
         address timelockAddr = vm.parseJsonAddress(raw, ".timelock");
         address governorAddr = vm.parseJsonAddress(raw, ".governor");
         address treasuryAddr = vm.parseJsonAddress(raw, ".treasury");
-        address lendingAddr  = vm.parseJsonAddress(raw, ".lending");
-        address vaultAddr    = vm.parseJsonAddress(raw, ".vault");
-        address ammPair      = vm.parseJsonAddress(raw, ".ammPair");
+        address lendingAddr = vm.parseJsonAddress(raw, ".lending");
+        address vaultAddr = vm.parseJsonAddress(raw, ".vault");
+        address ammPair = vm.parseJsonAddress(raw, ".ammPair");
 
         TimelockController timelock = TimelockController(payable(timelockAddr));
-        DeFiGovernor       governor = DeFiGovernor(payable(governorAddr));
-        GovernanceToken    token    = GovernanceToken(govToken);
+        DeFiGovernor governor = DeFiGovernor(payable(governorAddr));
+        GovernanceToken token = GovernanceToken(govToken);
 
         console2.log("\n========== POST-DEPLOYMENT VERIFICATION ==========\n");
 
-        // ── 1. Timelock delay ─────────────────────────────────────────────────
         _check(
             "Timelock minimum delay == 2 days",
             timelock.getMinDelay() == EXPECTED_TIMELOCK_DELAY
         );
 
-        // ── 2. Governor parameters ────────────────────────────────────────────
         _check(
             "Governor votingDelay == 1 day",
             governor.votingDelay() == EXPECTED_VOTING_DELAY
         );
+
         _check(
             "Governor votingPeriod == 1 week",
             governor.votingPeriod() == EXPECTED_VOTING_PERIOD
         );
+
         _check(
-            "Governor quorumNumerator == 4 %",
+            "Governor quorumNumerator == 4%",
             governor.quorumNumerator() == EXPECTED_QUORUM_PCT
         );
+
         _check(
             "Governor token == GovToken",
             address(governor.token()) == govToken
         );
 
-        // ── 3. Governor is proposer / canceller on Timelock ───────────────────
         _check(
             "Governor has PROPOSER_ROLE on Timelock",
             timelock.hasRole(timelock.PROPOSER_ROLE(), address(governor))
         );
+
         _check(
             "Governor has CANCELLER_ROLE on Timelock",
             timelock.hasRole(timelock.CANCELLER_ROLE(), address(governor))
         );
 
-        // ── 4. GovToken minter is Timelock (not deployer) ─────────────────────
         bytes32 minterRole = token.MINTER_ROLE();
+
         _check(
             "Timelock has MINTER_ROLE on GovToken",
             token.hasRole(minterRole, timelockAddr)
         );
-        // Deployer address check — deployer should NOT have minter role
-        // (we can't know deployer here without env, so we just log)
-        console2.log("[INFO] Manually verify deployer does not hold MINTER_ROLE");
 
-        // ── 5. LendingPool admin is cfg.admin (not deployer backdoor) ─────────
-        LendingPool lending = LendingPool(lendingAddr);
-        bytes32 adminRole   = lending.DEFAULT_ADMIN_ROLE();
-        console2.log("[INFO] LendingPool admin role holder count:",
-            lending.getRoleMemberCount(adminRole));
-
-        // ── 6. YieldVault admin ───────────────────────────────────────────────
-        YieldVault vault = YieldVault(vaultAddr);
-        console2.log("[INFO] YieldVault admin role holder count:",
-            vault.getRoleMemberCount(vault.DEFAULT_ADMIN_ROLE()));
-
-        // ── 7. AMM pair has non-zero reserves (liquidity seeded) ──────────────
-        // (may be zero pre-seed — just informational)
-        (uint112 rA, uint112 rB,) = AMM(ammPair).getReserves();
-        console2.log("[INFO] AMM reserves:", rA, "/", rB);
-
-        // ── 8. Oracle feeds set ───────────────────────────────────────────────
-        (address feedA,,) = ChainlinkOracle(oracle).getFeedConfig(
-            vm.parseJsonAddress(raw, ".ammPair") // tokenA placeholder
+        _check(
+            "Treasury is deployed",
+            treasuryAddr != address(0)
         );
+
+        LendingPool lending = LendingPool(lendingAddr);
+        bytes32 lendingAdminRole = lending.DEFAULT_ADMIN_ROLE();
+
+        console2.log(
+            "[INFO] LendingPool deployer has admin role:",
+            lending.hasRole(lendingAdminRole, msg.sender)
+        );
+
+        YieldVault vault = YieldVault(vaultAddr);
+        bytes32 vaultAdminRole = vault.DEFAULT_ADMIN_ROLE();
+
+        console2.log(
+            "[INFO] YieldVault deployer has admin role:",
+            vault.hasRole(vaultAdminRole, msg.sender)
+        );
+
+        (uint112 rA, uint112 rB,) = AMM(ammPair).getReserves();
+        console2.log("[INFO] AMM reserve A:", rA);
+        console2.log("[INFO] AMM reserve B:", rB);
+
         console2.log("[INFO] Oracle deployed at:", oracle);
 
-        // ── Final result ──────────────────────────────────────────────────────
         console2.log("\n==================================================");
+
         if (_allPassed) {
             console2.log("ALL CHECKS PASSED");
         } else {
-            console2.log("ONE OR MORE CHECKS FAILED — review output above");
+            console2.log("ONE OR MORE CHECKS FAILED - review output above");
             revert("Verification failed");
         }
     }
 
-    function _check(string memory label, bool condition) private view {
+    function _check(string memory label, bool condition) private {
         if (condition) {
             console2.log("[PASS]", label);
         } else {
             console2.log("[FAIL]", label);
-            // Can't mutate state in pure view — log is best we can do here
+            _allPassed = false;
         }
     }
 }

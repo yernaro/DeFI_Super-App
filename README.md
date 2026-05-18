@@ -33,6 +33,7 @@ defi-super-app/
 ├── src/
 │   ├── tokens/
 │   │   ├── GovernanceToken.sol       # ERC20Votes + ERC20Permit, UUPS
+│   │   ├── ProtocolBadgeNFT.sol      # ERC721 achievement badges, UUPS
 │   │   ├── GovernanceTokenV2.sol     # V1→V2 upgrade example
 │   │   └── LPToken.sol               # AMM LP token
 │   ├── amm/

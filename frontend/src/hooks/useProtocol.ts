@@ -141,7 +141,6 @@ export function useVaultData() {
           ...(address
             ? [
                 { ...contract, functionName: "balanceOf",       args: [address] } as const,
-                { ...contract, functionName: "convertToAssets", args: [data?.[2]?.result as bigint ?? 0n] } as const,
               ]
             : []),
         ]
