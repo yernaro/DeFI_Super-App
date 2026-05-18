@@ -9,5 +9,5 @@ const root = createRoot(container);
 root.render(
   <React.StrictMode>
     <Root />
-  </React.StrictMode>
+  </React.StrictMode>,
 );

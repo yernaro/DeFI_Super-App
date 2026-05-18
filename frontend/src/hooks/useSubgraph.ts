@@ -119,7 +119,11 @@ const VOTER_HISTORY_QUERY = `
 // ─────────────────────────────────────────────────────────────────────────────
 // Generic fetcher
 // ─────────────────────────────────────────────────────────────────────────────
-async function gqlFetch<T>(url: string, query: string, variables?: Record<string, unknown>): Promise<T> {
+async function gqlFetch<T>(
+  url: string,
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<T> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -137,7 +141,7 @@ async function gqlFetch<T>(url: string, query: string, variables?: Record<string
 
 function useSubgraphUrl(): string | null {
   const chainId = useChainId();
-  const d       = getDeployment(chainId);
+  const d = getDeployment(chainId);
   return d?.subgraph ?? null;
 }
 
@@ -145,8 +149,8 @@ export function useProposals() {
   const url = useSubgraphUrl();
   return useQuery({
     queryKey: ["proposals", url],
-    queryFn:  () => gqlFetch<{ proposals: Proposal[] }>(url!, PROPOSALS_QUERY),
-    enabled:  !!url,
+    queryFn: () => gqlFetch<{ proposals: Proposal[] }>(url!, PROPOSALS_QUERY),
+    enabled: !!url,
     refetchInterval: 30_000,
   });
 }
@@ -155,8 +159,9 @@ export function useRecentSwaps() {
   const url = useSubgraphUrl();
   return useQuery({
     queryKey: ["swaps", url],
-    queryFn:  () => gqlFetch<{ swaps: SubgraphSwap[] }>(url!, RECENT_SWAPS_QUERY),
-    enabled:  !!url,
+    queryFn: () =>
+      gqlFetch<{ swaps: SubgraphSwap[] }>(url!, RECENT_SWAPS_QUERY),
+    enabled: !!url,
     refetchInterval: 20_000,
   });
 }
@@ -165,8 +170,12 @@ export function useAtRiskPositions() {
   const url = useSubgraphUrl();
   return useQuery({
     queryKey: ["atRiskPositions", url],
-    queryFn:  () => gqlFetch<{ lendingPositions: SubgraphPosition[] }>(url!, AT_RISK_POSITIONS_QUERY),
-    enabled:  !!url,
+    queryFn: () =>
+      gqlFetch<{ lendingPositions: SubgraphPosition[] }>(
+        url!,
+        AT_RISK_POSITIONS_QUERY,
+      ),
+    enabled: !!url,
     refetchInterval: 30_000,
   });
 }
@@ -175,8 +184,9 @@ export function useProtocolStats() {
   const url = useSubgraphUrl();
   return useQuery({
     queryKey: ["protocolStats", url],
-    queryFn:  () => gqlFetch<{ protocolDayDatas: DayData[] }>(url!, PROTOCOL_STATS_QUERY),
-    enabled:  !!url,
+    queryFn: () =>
+      gqlFetch<{ protocolDayDatas: DayData[] }>(url!, PROTOCOL_STATS_QUERY),
+    enabled: !!url,
     refetchInterval: 60_000,
   });
 }
@@ -185,8 +195,9 @@ export function useVoterHistory(voter: string | undefined) {
   const url = useSubgraphUrl();
   return useQuery({
     queryKey: ["voterHistory", url, voter],
-    queryFn:  () => gqlFetch<{ votes: SubgraphVote[] }>(url!, VOTER_HISTORY_QUERY, { voter }),
-    enabled:  !!url && !!voter,
+    queryFn: () =>
+      gqlFetch<{ votes: SubgraphVote[] }>(url!, VOTER_HISTORY_QUERY, { voter }),
+    enabled: !!url && !!voter,
   });
 }
 
