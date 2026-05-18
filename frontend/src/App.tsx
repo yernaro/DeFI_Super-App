@@ -275,7 +275,6 @@ function DashboardPanel() {
   );
 }
 
-
 function SwapPanel() {
   const { address } = useAccount();
   const pool = usePoolData();
@@ -379,7 +378,6 @@ function SwapPanel() {
     </Card>
   );
 }
-
 
 function LendingPanel() {
   const { depositCollateral, borrow, repay, pending, error } = useLendingTx();
@@ -494,7 +492,6 @@ function LendingPanel() {
   );
 }
 
-
 function VaultPanel() {
   const { deposit, redeem, pending, error } = useVaultTx();
   const vault = useVaultData();
@@ -561,7 +558,6 @@ function VaultPanel() {
     </Card>
   );
 }
-
 
 function GovernancePanel() {
   const { data, isLoading } = useProposals();
@@ -702,7 +698,6 @@ function GovernancePanel() {
   );
 }
 
-
 function RecentSwapsPanel() {
   const { data, isLoading } = useRecentSwaps();
   return (
@@ -757,7 +752,6 @@ function RecentSwapsPanel() {
     </Card>
   );
 }
-
 
 function Card({
   title,
@@ -836,7 +830,6 @@ const inputStyle: React.CSSProperties = {
   fontSize: 14,
   boxSizing: "border-box",
 };
-
 
 const TABS = [
   "Dashboard",
@@ -931,7 +924,6 @@ function App() {
   );
 }
 
-
 function AnalyticsPanel() {
   const { data, isLoading } = useProtocolStats();
   const recentSwaps = useRecentSwaps();
@@ -1003,7 +995,6 @@ function AnalyticsPanel() {
     </div>
   );
 }
-
 
 export default function Root() {
   return (

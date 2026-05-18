@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useChainId } from "wagmi";
 import { getDeployment } from "../config";
 
-
 const PROPOSALS_QUERY = `
   query ActiveProposals {
     proposals(
@@ -98,9 +97,6 @@ const VOTER_HISTORY_QUERY = `
   }
 `;
 
-
-
-
 async function gqlFetch<T>(
   url: string,
   query: string,
@@ -116,10 +112,6 @@ async function gqlFetch<T>(
   if (json.errors?.length) throw new Error(json.errors[0].message);
   return json.data as T;
 }
-
-
-
-
 
 function useSubgraphUrl(): string | null {
   const chainId = useChainId();
@@ -182,7 +174,6 @@ export function useVoterHistory(voter: string | undefined) {
     enabled: !!url && !!voter,
   });
 }
-
 
 export interface Proposal {
   id: string;

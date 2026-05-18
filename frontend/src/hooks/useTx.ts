@@ -17,7 +17,6 @@ import {
   ERC20_ABI,
 } from "../abis";
 
-
 export function parseError(err: unknown): string {
   if (!err) return "Unknown error";
   const msg = String(
@@ -44,7 +43,6 @@ export function parseError(err: unknown): string {
   return msg.length > 120 ? msg.slice(0, 120) + "…" : msg;
 }
 
-
 export function useNetworkGuard() {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
@@ -57,7 +55,6 @@ export function useNetworkGuard() {
 
   return { isSupported, promptSwitch };
 }
-
 
 export function useTx() {
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +84,6 @@ export function useTx() {
   return { write, pending, error, clearError: () => setError(null) };
 }
 
-
 export function useSwap() {
   const chainId = useChainId();
   const { write, pending, error } = useTx();
@@ -101,7 +97,7 @@ export function useSwap() {
       recipient: string,
     ) => {
       if (!d) return null;
-      
+
       const tokenIn = aToB ? d.tokenA : d.tokenB;
       await write({
         address: tokenIn as `0x${string}`,
@@ -137,7 +133,7 @@ export function useAddLiquidity() {
       if (!d) return null;
       const amtAWei = parseUnits(amtA, 18);
       const amtBWei = parseUnits(amtB, 18);
-      const slippage = 50n; 
+      const slippage = 50n;
       const minA = (amtAWei * (10000n - slippage)) / 10000n;
       const minB = (amtBWei * (10000n - slippage)) / 10000n;
 
@@ -166,7 +162,6 @@ export function useAddLiquidity() {
 
   return { addLiquidity, pending, error };
 }
-
 
 export function useLendingTx() {
   const chainId = useChainId();
@@ -229,7 +224,6 @@ export function useLendingTx() {
   return { depositCollateral, borrow, repay, pending, error };
 }
 
-
 export function useVaultTx() {
   const chainId = useChainId();
   const { write, pending, error } = useTx();
@@ -271,7 +265,6 @@ export function useVaultTx() {
 
   return { deposit, redeem, pending, error };
 }
-
 
 export function useGovernanceTx() {
   const chainId = useChainId();
