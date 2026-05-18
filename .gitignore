@@ -1,2 +1,15 @@
+
 node_modules
 cache
+out/
+cache/
+broadcast/
+
+node_modules/
+.env
+.env.*
+
+.DS_Store
+.idea/
+.vscode/
+
