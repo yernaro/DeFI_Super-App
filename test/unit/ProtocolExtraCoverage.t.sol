@@ -129,6 +129,26 @@ contract DeFiGovernorExtraCoverageTest is BaseTest {
 }
 
 contract YieldVaultAdditionalCoverageTest is BaseTest {
+    function test_yieldVault_initialize_success_directProxy() public {
+        YieldVault impl = new YieldVault();
+
+        bytes memory data =
+            abi.encodeCall(YieldVault.initialize, (address(tokenB), "Vault", "vTOKEN", 1000, admin, admin));
+
+        ERC1967Proxy proxy = new ERC1967Proxy(address(impl), data);
+        YieldVault initializedVault = YieldVault(address(proxy));
+
+        assertEq(initializedVault.name(), "Vault");
+        assertEq(initializedVault.symbol(), "vTOKEN");
+        assertEq(initializedVault.asset(), address(tokenB));
+        assertEq(initializedVault.performanceFee(), 1000);
+        assertEq(initializedVault.feeRecipient(), admin);
+        assertTrue(initializedVault.hasRole(initializedVault.DEFAULT_ADMIN_ROLE(), admin));
+        assertTrue(initializedVault.hasRole(initializedVault.KEEPER_ROLE(), admin));
+        assertTrue(initializedVault.hasRole(initializedVault.PAUSER_ROLE(), admin));
+        assertTrue(initializedVault.hasRole(initializedVault.UPGRADER_ROLE(), admin));
+    }
+
     function test_yieldVault_initialize_reverts_zeroAsset() public {
         YieldVault impl = new YieldVault();
 
@@ -167,9 +187,48 @@ contract YieldVaultAdditionalCoverageTest is BaseTest {
         vm.expectRevert(YieldVault.FeeTooHigh.selector);
         new ERC1967Proxy(address(impl), data);
     }
+
+    function test_yieldVault_setPerformanceFee_success() public {
+        vm.prank(admin);
+        vault.setPerformanceFee(250);
+
+        assertEq(vault.performanceFee(), 250);
+    }
+
+    function test_yieldVault_pause_unpause_directCoverage() public {
+        vm.prank(admin);
+        vault.pause();
+
+        vm.prank(admin);
+        vault.unpause();
+
+        assertFalse(vault.paused());
+    }
 }
 
 contract LendingPoolAdditionalCoverageTest is BaseTest {
+    function test_lendingPool_initialize_success_directProxy() public {
+        LendingPool impl = new LendingPool();
+
+        bytes memory data = abi.encodeCall(
+            LendingPool.initialize, (address(tokenA), address(tokenB), address(oracle), address(treasury), admin)
+        );
+
+        ERC1967Proxy proxy = new ERC1967Proxy(address(impl), data);
+        LendingPool initializedLending = LendingPool(address(proxy));
+
+        assertEq(address(initializedLending.collateralToken()), address(tokenA));
+        assertEq(address(initializedLending.debtToken()), address(tokenB));
+        assertEq(address(initializedLending.oracle()), address(oracle));
+        assertEq(initializedLending.treasury(), address(treasury));
+        assertEq(initializedLending.cumulativeInterestIndex(), 1e27);
+        assertEq(initializedLending.lastAccrualTimestamp(), block.timestamp);
+        assertTrue(initializedLending.hasRole(initializedLending.DEFAULT_ADMIN_ROLE(), admin));
+        assertTrue(initializedLending.hasRole(initializedLending.PAUSER_ROLE(), admin));
+        assertTrue(initializedLending.hasRole(initializedLending.UPGRADER_ROLE(), admin));
+        assertTrue(initializedLending.hasRole(initializedLending.RISK_ADMIN(), admin));
+    }
+
     function test_lendingPool_initialize_reverts_zeroCollateralToken() public {
         LendingPool impl = new LendingPool();
 
@@ -223,6 +282,90 @@ contract LendingPoolAdditionalCoverageTest is BaseTest {
 
         vm.expectRevert(LendingPool.ZeroAddress.selector);
         new ERC1967Proxy(address(impl), data);
+    }
+
+    function test_lendingPool_accrueInterest_sameTimestamp_returnsEarly() public {
+        uint256 lastAccrual = lending.lastAccrualTimestamp();
+
+        lending.accrueInterest();
+
+        assertEq(lending.lastAccrualTimestamp(), lastAccrual);
+        assertEq(lending.totalDebt(), 0);
+    }
+
+    function test_lendingPool_accrueInterest_zeroInterest_updatesTimestamp() public {
+        _supplyDebt(bob, 100e18);
+        _depositCollateral(alice, 1e18);
+        _borrow(alice, 1);
+
+        vm.warp(block.timestamp + 1);
+        uint256 expectedTimestamp = block.timestamp;
+
+        lending.accrueInterest();
+
+        assertEq(lending.lastAccrualTimestamp(), expectedTimestamp);
+        assertEq(lending.totalDebt(), 1);
+    }
+
+    function test_lendingPool_withdrawCollateral_withoutDebt() public {
+        _depositCollateral(alice, 2e18);
+
+        uint256 aliceBefore = tokenA.balanceOf(alice);
+
+        vm.prank(alice);
+        lending.withdrawCollateral(1e18);
+
+        (uint256 collateral,,, LendingPool.PositionState state) = lending.positions(alice);
+        assertEq(collateral, 1e18);
+        assertEq(lending.totalCollateral(), 1e18);
+        assertEq(tokenA.balanceOf(alice), aliceBefore + 1e18);
+        assertEq(uint256(state), uint256(LendingPool.PositionState.Active));
+    }
+
+    function test_lendingPool_repay_capsToCurrentDebt() public {
+        _supplyDebt(bob, 40_000e18);
+        _depositCollateral(alice, 1e18);
+        _borrow(alice, 500e18);
+
+        vm.prank(alice);
+        lending.repay(1000e18);
+
+        (, uint256 debt,,) = lending.positions(alice);
+        assertEq(debt, 0);
+        assertEq(lending.totalDebt(), 0);
+    }
+
+    function test_lendingPool_liquidate_capsRepayToHalfDebt() public {
+        _supplyDebt(bob, 40_000e18);
+        _depositCollateral(alice, 1e18);
+        _borrow(alice, 1400e18);
+
+        vm.prank(admin);
+        feedA.setAnswer(1500e8);
+
+        vm.prank(carol);
+        lending.liquidate(alice, 10_000e18);
+
+        (, uint256 debt,, LendingPool.PositionState state) = lending.positions(alice);
+        assertEq(debt, 700e18);
+        assertEq(uint256(state), uint256(LendingPool.PositionState.Active));
+    }
+
+    function test_lendingPool_liquidate_capsCollateralAndMarksLiquidated() public {
+        _supplyDebt(bob, 100e18);
+        _depositCollateral(alice, 1e8);
+        _borrow(alice, 1);
+
+        vm.prank(admin);
+        feedA.setAnswer(1);
+
+        vm.prank(carol);
+        lending.liquidate(alice, 1);
+
+        (uint256 collateral, uint256 debt,, LendingPool.PositionState state) = lending.positions(alice);
+        assertEq(collateral, 0);
+        assertEq(debt, 0);
+        assertEq(uint256(state), uint256(LendingPool.PositionState.Liquidated));
     }
 }
 
@@ -298,6 +441,22 @@ contract GovernorCancelAdditionalTest is BaseTest {
 }
 
 contract AMMAdditionalCoverageTest is BaseTest {
+    function test_amm_initialize_success_directProxy() public {
+        AMM impl = new AMM();
+
+        bytes memory data = abi.encodeCall(AMM.initialize, (address(tokenA), address(tokenB), admin));
+
+        ERC1967Proxy proxy = new ERC1967Proxy(address(impl), data);
+        AMM initializedAmm = AMM(address(proxy));
+
+        assertEq(address(initializedAmm.tokenA()), address(tokenA));
+        assertEq(address(initializedAmm.tokenB()), address(tokenB));
+        assertTrue(address(initializedAmm.lpToken()) != address(0));
+        assertTrue(initializedAmm.hasRole(initializedAmm.DEFAULT_ADMIN_ROLE(), admin));
+        assertTrue(initializedAmm.hasRole(initializedAmm.PAUSER_ROLE(), admin));
+        assertTrue(initializedAmm.hasRole(initializedAmm.UPGRADER_ROLE(), admin));
+    }
+
     function test_amm_initialize_reverts_zeroTokenA() public {
         AMM impl = new AMM();
 
@@ -355,6 +514,70 @@ contract AMMAdditionalCoverageTest is BaseTest {
 
         vm.prank(admin);
         amm.unpause();
+    }
+
+    function test_amm_getAmountIn_reverts_onZeroReserve() public {
+        vm.expectRevert(AMM.InsufficientLiquidity.selector);
+        amm.getAmountIn(10e18, 0, 2000e18);
+    }
+
+    function test_amm_getAmountIn_reverts_whenOutputConsumesReserve() public {
+        vm.expectRevert(AMM.InsufficientLiquidity.selector);
+        amm.getAmountIn(2000e18, 1000e18, 2000e18);
+    }
+
+    function test_amm_addLiquidity_adjustsTokenAWhenTokenBIsLimiting() public {
+        _addLiquidity(alice, 1000e18, 2000e18);
+
+        vm.prank(bob);
+        (uint256 aUsed, uint256 bUsed, uint256 lp) = amm.addLiquidity(9999e18, 500e18, 0, 0);
+
+        assertEq(aUsed, 250e18);
+        assertEq(bUsed, 500e18);
+        assertGt(lp, 0);
+    }
+
+    function test_amm_addLiquidity_reverts_tokenAOptimalBelowMinimum() public {
+        _addLiquidity(alice, 1000e18, 2000e18);
+
+        vm.prank(bob);
+        vm.expectRevert(abi.encodeWithSelector(AMM.SlippageExceeded.selector, 250e18, 300e18));
+        amm.addLiquidity(9999e18, 500e18, 300e18, 0);
+    }
+
+    function test_amm_removeLiquidity_reverts_tokenBSlippage() public {
+        uint256 lp = _addLiquidity(alice, 1000e18, 2000e18);
+
+        vm.startPrank(alice);
+        amm.lpToken().approve(address(amm), lp);
+        vm.expectRevert();
+        amm.removeLiquidity(lp, 0, 3000e18);
+        vm.stopPrank();
+    }
+}
+
+contract AMMFactoryAdditionalCoverageTest is BaseTest {
+    function test_factory_constructor_reverts_zeroImplementation() public {
+        vm.expectRevert(AMMFactory.ZeroAddress.selector);
+        new AMMFactory(admin, address(0));
+    }
+
+    function test_factory_createPair_reverts_zeroToken() public {
+        vm.prank(admin);
+        vm.expectRevert(AMMFactory.ZeroAddress.selector);
+        factory.createPair(address(0), address(tokenC));
+    }
+
+    function test_factory_predictPairAddress_sortsTokens() public view {
+        address predictedForward = factory.predictPairAddress(address(tokenA), address(tokenC));
+        address predictedReverse = factory.predictPairAddress(address(tokenC), address(tokenA));
+
+        assertEq(predictedForward, predictedReverse);
+    }
+
+    function test_factory_pairLookupWorksBothDirections() public view {
+        assertEq(factory.getPair(address(tokenA), address(tokenB)), address(amm));
+        assertEq(factory.getPair(address(tokenB), address(tokenA)), address(amm));
     }
 }
 

@@ -139,7 +139,7 @@ forge test --match-contract ForkTest \
 ### Coverage
 
 ```bash
-forge coverage --no-match-contract ForkTest --report summary
+forge coverage --skip script --no-match-contract ForkTest --no-match-coverage "^(script|test)/" --report summary
 ```
 
 Target: ≥ 90% line coverage across `src/`.

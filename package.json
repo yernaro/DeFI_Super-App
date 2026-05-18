@@ -8,7 +8,7 @@
     "slither": "slither . --foundry-compile-all --exclude-dependencies",
     "test": "forge test --no-match-contract ForkTest -vvv",
     "test:fork": "forge test --match-contract ForkTest --fork-url $MAINNET_RPC -vvv",
-    "coverage": "forge coverage --no-match-contract ForkTest --report summary",
+    "coverage": "forge coverage --skip script --no-match-contract ForkTest --no-match-coverage \"^(script|test)/\" --report summary",
     "snapshot": "forge snapshot --no-match-contract ForkTest",
     "build": "forge build --sizes",
     "deploy:arb-sepolia": "forge script script/Deploy.s.sol --rpc-url $ARBITRUM_SEPOLIA_RPC --broadcast --verify -vvvv",

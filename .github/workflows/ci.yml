@@ -85,7 +85,9 @@ jobs:
       - name: Forge coverage
         run: |
           forge coverage \
+            --skip script \
             --no-match-contract ForkTest \
+            --no-match-coverage "^(script|test)/" \
             --report lcov \
             --report summary \
             > coverage-summary.txt
@@ -111,10 +113,9 @@ jobs:
 
       - name: Check line coverage >= 90%
         run: |
-          LINE_PCT=$(grep -oP 'Lines\s*:\s*\K[\d.]+' coverage-summary.txt | head -1)
+          LINE_PCT=$(python3 -c "import re; text=open('coverage-summary.txt', encoding='utf-8').read(); match=re.search(r'\|\s*Total\s*\|\s*([0-9.]+)%', text); assert match, 'Could not parse Total line coverage'; print(match.group(1))")
           echo "Line coverage: ${LINE_PCT}%"
-          python3 -c "import sys; pct=float('${LINE_PCT}'); sys.exit(0 if pct>=90 else 1)" \
-            || echo "::warning::Coverage below 90% threshold"
+          python3 -c "import sys; pct=float('${LINE_PCT}'); sys.exit(0 if pct>=90 else 1)"
 
   slither:
     name: Slither
