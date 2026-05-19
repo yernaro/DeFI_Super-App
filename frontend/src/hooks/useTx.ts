@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import {
   useAccount,
   useChainId,
+  usePublicClient,
   useWriteContract,
   useWaitForTransactionReceipt,
   useSwitchChain,
@@ -70,6 +71,8 @@ export function useTx() {
   const [pending, setPending] = useState(false);
 
   const { writeContractAsync } = useWriteContract();
+  const { address } = useAccount();
+  const publicClient = usePublicClient();
 
   const write = useCallback(
     async (
@@ -78,7 +81,36 @@ export function useTx() {
       setError(null);
       setPending(true);
       try {
-        const hash = await writeContractAsync(args);
+        const fees = await publicClient?.estimateFeesPerGas().catch(() => null);
+        const block = await publicClient?.getBlock().catch(() => null);
+        const gas = address
+          ? await publicClient
+              ?.estimateContractGas({ ...args, account: address })
+              .catch(() => null)
+          : null;
+        const baseFee = block?.baseFeePerGas;
+        const minPriorityFee = 1_000_000n;
+        const priorityFee = fees?.maxPriorityFeePerGas
+          ? fees.maxPriorityFeePerGas > minPriorityFee
+            ? fees.maxPriorityFeePerGas
+            : minPriorityFee
+          : minPriorityFee;
+        const maxFee = baseFee
+          ? baseFee * 3n + priorityFee
+          : fees?.maxFeePerGas
+            ? (fees.maxFeePerGas * 150n) / 100n
+            : undefined;
+        const bufferedArgs =
+          maxFee
+            ? {
+                ...args,
+                gas: gas ? (gas * 150n) / 100n : undefined,
+                maxFeePerGas: maxFee,
+                maxPriorityFeePerGas: priorityFee,
+              }
+            : args;
+        const hash = await writeContractAsync(bufferedArgs);
+        await publicClient?.waitForTransactionReceipt({ hash });
         return hash;
       } catch (err) {
         setError(parseError(err));
@@ -87,7 +119,7 @@ export function useTx() {
         setPending(false);
       }
     },
-    [writeContractAsync],
+    [publicClient, writeContractAsync],
   );
 
   return { write, pending, error, clearError: () => setError(null) };
@@ -111,12 +143,13 @@ export function useSwap() {
       if (!d) return null;
       // First approve tokenIn
       const tokenIn = aToB ? d.tokenA : d.tokenB;
-      await write({
+      const approved = await write({
         address: tokenIn as `0x${string}`,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [d.amm as `0x${string}`, parseUnits(amountIn, 18)],
       });
+      if (!approved) return null;
       return write({
         address: d.amm as `0x${string}`,
         abi: AMM_ABI,
@@ -124,7 +157,7 @@ export function useSwap() {
         args: [
           parseUnits(amountIn, 18),
           parseUnits(minAmountOut, 18),
-          aToB,
+          !aToB,
           recipient as `0x${string}`,
         ],
       });
@@ -149,24 +182,26 @@ export function useAddLiquidity() {
       const minA = (amtAWei * (10000n - slippage)) / 10000n;
       const minB = (amtBWei * (10000n - slippage)) / 10000n;
 
-      await write({
+      const approvedA = await write({
         address: d.tokenA as `0x${string}`,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [d.amm as `0x${string}`, amtAWei],
       });
-      await write({
+      if (!approvedA) return null;
+      const approvedB = await write({
         address: d.tokenB as `0x${string}`,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [d.amm as `0x${string}`, amtBWei],
       });
+      if (!approvedB) return null;
 
       return write({
         address: d.amm as `0x${string}`,
         abi: AMM_ABI,
         functionName: "addLiquidity",
-        args: [amtAWei, amtBWei, minA, minB],
+        args: [amtBWei, amtAWei, minB, minA],
       });
     },
     [d, write],
@@ -187,12 +222,13 @@ export function useLendingTx() {
     async (amount: string) => {
       if (!d) return null;
       const wei = parseUnits(amount, 18);
-      await write({
+      const approved = await write({
         address: d.tokenA as `0x${string}`,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [d.lending as `0x${string}`, wei],
       });
+      if (!approved) return null;
       return write({
         address: d.lending as `0x${string}`,
         abi: LENDING_ABI,
@@ -220,12 +256,13 @@ export function useLendingTx() {
     async (amount: string) => {
       if (!d) return null;
       const wei = parseUnits(amount, 18);
-      await write({
+      const approved = await write({
         address: d.tokenB as `0x${string}`,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [d.lending as `0x${string}`, wei],
       });
+      if (!approved) return null;
       return write({
         address: d.lending as `0x${string}`,
         abi: LENDING_ABI,
@@ -236,7 +273,28 @@ export function useLendingTx() {
     [d, write],
   );
 
-  return { depositCollateral, borrow, repay, pending, error };
+  const supplyDebtToken = useCallback(
+    async (amount: string) => {
+      if (!d) return null;
+      const wei = parseUnits(amount, 18);
+      const approved = await write({
+        address: d.tokenB as `0x${string}`,
+        abi: ERC20_ABI,
+        functionName: "approve",
+        args: [d.lending as `0x${string}`, wei],
+      });
+      if (!approved) return null;
+      return write({
+        address: d.lending as `0x${string}`,
+        abi: LENDING_ABI,
+        functionName: "supplyDebtToken",
+        args: [wei],
+      });
+    },
+    [d, write],
+  );
+
+  return { depositCollateral, borrow, repay, supplyDebtToken, pending, error };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -252,12 +310,13 @@ export function useVaultTx() {
     async (amount: string) => {
       if (!d || !address) return null;
       const wei = parseUnits(amount, 18);
-      await write({
+      const approved = await write({
         address: d.tokenB as `0x${string}`,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [d.vault as `0x${string}`, wei],
       });
+      if (!approved) return null;
       return write({
         address: d.vault as `0x${string}`,
         abi: VAULT_ABI,

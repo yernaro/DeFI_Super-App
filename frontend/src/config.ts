@@ -1,6 +1,6 @@
 import { createConfig, http } from "wagmi";
 import { arbitrumSepolia, optimismSepolia, baseSepolia } from "wagmi/chains";
-import { injected, walletConnect } from "@wagmi/connectors";
+import { injected, walletConnect } from "wagmi/connectors";
 
 const projectId =
   import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "demo-project-id";

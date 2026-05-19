@@ -303,8 +303,8 @@ function SwapPanel() {
   const [txHash, setTxHash] = useState<string | null>(null);
   const [localErr, setLocalErr] = useState<string | null>(null);
 
-  const rIn = aToB ? pool.reserveA : pool.reserveB;
-  const rOut = aToB ? pool.reserveB : pool.reserveA;
+  const rIn = aToB ? pool.reserveB : pool.reserveA;
+  const rOut = aToB ? pool.reserveA : pool.reserveB;
 
   let amtOut = "";
   try {
@@ -400,10 +400,110 @@ function SwapPanel() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Lending panel
 // ─────────────────────────────────────────────────────────────────────────────
+function AddLiquidityPanel() {
+  const chainId = useChainId();
+  const d = getDeployment(chainId);
+  const pool = usePoolData();
+  const { addLiquidity, pending, error } = useAddLiquidity();
+  const tokenABalance = useTokenBalance(d?.tokenA);
+  const tokenBBalance = useTokenBalance(d?.tokenB);
+  const [amtA, setAmtA] = useState("");
+  const [amtB, setAmtB] = useState("");
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [localErr, setLocalErr] = useState<string | null>(null);
+
+  async function handleAddLiquidity() {
+    setLocalErr(null);
+    setTxHash(null);
+    if (!amtA || Number(amtA) <= 0 || !amtB || Number(amtB) <= 0) {
+      setLocalErr("Enter both token amounts.");
+      return;
+    }
+
+    const hash = await addLiquidity(amtA, amtB);
+    if (hash) {
+      setTxHash(hash);
+      setAmtA("");
+      setAmtB("");
+      pool.refetch();
+      tokenABalance.refetch();
+      tokenBBalance.refetch();
+    } else if (error) {
+      setLocalErr(error);
+    }
+  }
+
+  return (
+    <Card title="Add Liquidity">
+      {localErr && (
+        <ErrorBanner msg={localErr} onClose={() => setLocalErr(null)} />
+      )}
+      {txHash && (
+        <div style={{ color: "#10b981", fontSize: 13, margin: "4px 0" }}>
+          Tx: {shortAddr(txHash)}
+        </div>
+      )}
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+          gap: 12,
+        }}
+      >
+        <div>
+          <label style={labelStyle}>TKA Amount</label>
+          <input
+            style={inputStyle}
+            type="number"
+            placeholder="0.0"
+            value={amtA}
+            onChange={(e) => setAmtA(e.target.value)}
+          />
+          <div style={{ color: "#6b7280", fontSize: 12, marginTop: 4 }}>
+            Balance: {fmt(tokenABalance.data as bigint | undefined)} TKA
+          </div>
+        </div>
+        <div>
+          <label style={labelStyle}>TKB Amount</label>
+          <input
+            style={inputStyle}
+            type="number"
+            placeholder="0.0"
+            value={amtB}
+            onChange={(e) => setAmtB(e.target.value)}
+          />
+          <div style={{ color: "#6b7280", fontSize: 12, marginTop: 4 }}>
+            Balance: {fmt(tokenBBalance.data as bigint | undefined)} TKB
+          </div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 12 }}>
+        <Row label="Current Reserve TKA" value={`${fmt(pool.reserveB)} TKA`} />
+        <Row label="Current Reserve TKB" value={`${fmt(pool.reserveA)} TKB`} />
+      </div>
+
+      <button
+        onClick={handleAddLiquidity}
+        disabled={pending}
+        style={{ ...btnStyle("#6366f1"), marginTop: 12, width: "100%" }}
+      >
+        {pending ? "Adding liquidity..." : "Add Liquidity"}
+      </button>
+    </Card>
+  );
+}
+
 function LendingPanel() {
-  const { depositCollateral, borrow, repay, pending, error } = useLendingTx();
+  const { depositCollateral, borrow, repay, supplyDebtToken, pending, error } =
+    useLendingTx();
   const lending = useLendingPosition();
+  const chainId = useChainId();
+  const d = getDeployment(chainId);
+  const debtTokenBalance = useTokenBalance(d?.tokenB);
   const [colAmt, setColAmt] = useState("");
+  const [supplyAmt, setSupplyAmt] = useState("");
   const [borAmt, setBorAmt] = useState("");
   const [repAmt, setRepAmt] = useState("");
   const [localErr, setLocalErr] = useState<string | null>(null);
@@ -418,6 +518,18 @@ function LendingPanel() {
       setTxHash(h);
       setColAmt("");
       lending.refetch();
+    } else if (error) setLocalErr(error);
+  }
+  async function doSupply() {
+    setLocalErr(null);
+    if (!supplyAmt || Number(supplyAmt) <= 0)
+      return setLocalErr("Enter TKB liquidity amount.");
+    const h = await supplyDebtToken(supplyAmt);
+    if (h) {
+      setTxHash(h);
+      setSupplyAmt("");
+      lending.refetch();
+      debtTokenBalance.refetch();
     } else if (error) setLocalErr(error);
   }
   async function doBorrow() {
@@ -455,7 +567,11 @@ function LendingPanel() {
       )}
 
       <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+          gap: 12,
+        }}
       >
         <div>
           <label style={labelStyle}>Deposit Collateral (TKA)</label>
@@ -472,6 +588,26 @@ function LendingPanel() {
             style={{ ...btnStyle("#6366f1"), width: "100%", marginTop: 4 }}
           >
             {pending ? "…" : "Deposit"}
+          </button>
+        </div>
+        <div>
+          <label style={labelStyle}>Supply Pool Liquidity (TKB)</label>
+          <input
+            style={inputStyle}
+            type="number"
+            placeholder="0.0"
+            value={supplyAmt}
+            onChange={(e) => setSupplyAmt(e.target.value)}
+          />
+          <div style={{ color: "#6b7280", fontSize: 12, marginTop: 4 }}>
+            Balance: {fmt(debtTokenBalance.data as bigint | undefined)} TKB
+          </div>
+          <button
+            onClick={doSupply}
+            disabled={pending}
+            style={{ ...btnStyle("#0ea5e9"), width: "100%", marginTop: 4 }}
+          >
+            {pending ? "â€¦" : "Supply TKB"}
           </button>
         </div>
         <div>
@@ -948,7 +1084,12 @@ function App() {
         {isConnected && (
           <>
             {tab === "Dashboard" && <DashboardPanel />}
-            {tab === "Swap" && <SwapPanel />}
+            {tab === "Swap" && (
+              <div style={{ display: "grid", gap: 16 }}>
+                <AddLiquidityPanel />
+                <SwapPanel />
+              </div>
+            )}
             {tab === "Lending" && <LendingPanel />}
             {tab === "Vault" && <VaultPanel />}
             {tab === "Governance" && <GovernancePanel />}

@@ -1,8 +1,8 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// Minimal ABIs — generated from NatSpec / interface
-// ─────────────────────────────────────────────────────────────────────────────
+import { parseAbi } from "viem";
 
-export const ERC20_ABI = [
+// Minimal ABIs generated from NatSpec / interface.
+
+const ERC20_ABI_ITEMS = [
   "function name() view returns (string)",
   "function symbol() view returns (string)",
   "function decimals() view returns (uint8)",
@@ -14,8 +14,10 @@ export const ERC20_ABI = [
   "function transferFrom(address,address,uint256) returns (bool)",
 ] as const;
 
-export const GOV_TOKEN_ABI = [
-  ...ERC20_ABI,
+export const ERC20_ABI = parseAbi(ERC20_ABI_ITEMS);
+
+export const GOV_TOKEN_ABI = parseAbi([
+  ...ERC20_ABI_ITEMS,
   "function getVotes(address) view returns (uint256)",
   "function delegates(address) view returns (address)",
   "function delegate(address delegatee)",
@@ -24,9 +26,9 @@ export const GOV_TOKEN_ABI = [
   "function maxSupply() view returns (uint256)",
   "event DelegateChanged(address indexed,address indexed,address indexed)",
   "event DelegateVotesChanged(address indexed,uint256,uint256)",
-] as const;
+] as const);
 
-export const AMM_ABI = [
+export const AMM_ABI = parseAbi([
   "function tokenA() view returns (address)",
   "function tokenB() view returns (address)",
   "function lpToken() view returns (address)",
@@ -41,9 +43,9 @@ export const AMM_ABI = [
   "event LiquidityRemoved(address indexed,uint256,uint256,uint256)",
   "event Swap(address indexed,uint256,uint256,bool,address indexed)",
   "event Sync(uint112,uint112)",
-] as const;
+] as const);
 
-export const LENDING_ABI = [
+export const LENDING_ABI = parseAbi([
   "function positions(address) view returns (uint256,uint256,uint256,uint8)",
   "function healthFactor(address) view returns (uint256)",
   "function currentDebt(address) view returns (uint256)",
@@ -61,9 +63,9 @@ export const LENDING_ABI = [
   "event Borrowed(address indexed,uint256)",
   "event Repaid(address indexed,uint256,uint256)",
   "event Liquidated(address indexed,address indexed,uint256,uint256)",
-] as const;
+] as const);
 
-export const VAULT_ABI = [
+export const VAULT_ABI = parseAbi([
   "function asset() view returns (address)",
   "function totalAssets() view returns (uint256)",
   "function totalSupply() view returns (uint256)",
@@ -78,9 +80,9 @@ export const VAULT_ABI = [
   "function performanceFee() view returns (uint256)",
   "event Deposit(address indexed,address indexed,uint256,uint256)",
   "event Withdraw(address indexed,address indexed,address indexed,uint256,uint256)",
-] as const;
+] as const);
 
-export const GOVERNOR_ABI = [
+export const GOVERNOR_ABI = parseAbi([
   "function name() view returns (string)",
   "function votingDelay() view returns (uint256)",
   "function votingPeriod() view returns (uint256)",
@@ -100,4 +102,4 @@ export const GOVERNOR_ABI = [
   "event VoteCast(address indexed,uint256,uint8,uint256,string)",
   "event ProposalQueued(uint256,uint256)",
   "event ProposalExecuted(uint256)",
-] as const;
+] as const);
