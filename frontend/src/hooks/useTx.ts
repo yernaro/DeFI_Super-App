@@ -91,15 +91,14 @@ export function useTx() {
           : fees?.maxFeePerGas
             ? (fees.maxFeePerGas * 150n) / 100n
             : undefined;
-        const bufferedArgs =
-          maxFee
-            ? {
-                ...args,
-                gas: gas ? (gas * 150n) / 100n : undefined,
-                maxFeePerGas: maxFee,
-                maxPriorityFeePerGas: priorityFee,
-              }
-            : args;
+        const bufferedArgs = maxFee
+          ? {
+              ...args,
+              gas: gas ? (gas * 150n) / 100n : undefined,
+              maxFeePerGas: maxFee,
+              maxPriorityFeePerGas: priorityFee,
+            }
+          : args;
         const hash = await writeContractAsync(bufferedArgs);
         await publicClient?.waitForTransactionReceipt({ hash });
         return hash;
