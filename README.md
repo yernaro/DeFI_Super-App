@@ -139,7 +139,7 @@ forge test --match-contract ForkTest \
 ### Coverage
 
 ```bash
-forge coverage --skip script --no-match-contract ForkTest --no-match-coverage "^(script|test)/" --report summary
+forge coverage --ir-minimum --no-match-coverage "script|test" --no-match-contract ForkTest
 ```
 
 Target: ≥ 90% line coverage across `src/`.
@@ -335,9 +335,9 @@ npm run dev           # http://localhost:5173
 
 | Member | Area of Ownership |
 |--------|------------------|
-| Member A | AMM, AMMFactory, MathUtils, fuzz/invariant tests |
-| Member B | LendingPool, YieldVault, Oracle, fork tests |
-| Member C | Governance, Frontend, Subgraph, CI/DevOps |
+| Yernar Orleu | AMM, AMMFactory, MathUtils, fuzz/invariant tests |
+| Ramazan Seilbekov | LendingPool, YieldVault, Oracle, fork tests |
+| Zerkhanov Sultan | Governance, Frontend, Subgraph, CI/DevOps |
 
 ---
 
