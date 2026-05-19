@@ -14,9 +14,6 @@ import {
   ERC20_ABI,
 } from "../abis";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 export function useDeployment() {
   const chainId = useChainId();
   return getDeployment(chainId);
@@ -30,9 +27,6 @@ export function fmt(raw: bigint | undefined, decimals = 18, dp = 4): string {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Governance token
-// ─────────────────────────────────────────────────────────────────────────────
 export function useGovTokenData() {
   const { address } = useAccount();
   const d = useDeployment();
@@ -67,9 +61,6 @@ export function useGovTokenData() {
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AMM pool
-// ─────────────────────────────────────────────────────────────────────────────
 export function usePoolData() {
   const d = useDeployment();
 
@@ -100,9 +91,6 @@ export function usePoolData() {
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Lending position
-// ─────────────────────────────────────────────────────────────────────────────
 export function useLendingPosition() {
   const { address } = useAccount();
   const d = useDeployment();
@@ -132,7 +120,7 @@ export function useLendingPosition() {
   return {
     collateral: pos?.[0],
     debtPrincipal: pos?.[1],
-    positionState: pos?.[3], // 0=None,1=Active,2=Liquidated
+    positionState: pos?.[3],
     healthFactor: data?.[1]?.result as bigint | undefined,
     currentDebt: data?.[2]?.result as bigint | undefined,
     utilizationRate: data?.[3]?.result as bigint | undefined,
@@ -143,9 +131,6 @@ export function useLendingPosition() {
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Vault
-// ─────────────────────────────────────────────────────────────────────────────
 export function useVaultData() {
   const { address } = useAccount();
   const d = useDeployment();
@@ -186,9 +171,6 @@ export function useVaultData() {
   return { totalAssets, totalSupply, shares, sharePrice, isLoading, refetch };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Token balance helper
-// ─────────────────────────────────────────────────────────────────────────────
 export function useTokenBalance(tokenAddress: string | undefined) {
   const { address } = useAccount();
 

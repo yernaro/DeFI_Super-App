@@ -2,13 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useChainId } from "wagmi";
 import { getDeployment } from "../config";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GraphQL query definitions  (5 documented queries)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Query 1 — Active governance proposals with vote tallies.
- */
 const PROPOSALS_QUERY = `
   query ActiveProposals {
     proposals(
@@ -32,9 +25,6 @@ const PROPOSALS_QUERY = `
   }
 `;
 
-/**
- * Query 2 — Recent swaps for the pool (last 50).
- */
 const RECENT_SWAPS_QUERY = `
   query RecentSwaps {
     swaps(orderBy: timestamp, orderDirection: desc, first: 50) {
@@ -55,9 +45,6 @@ const RECENT_SWAPS_QUERY = `
   }
 `;
 
-/**
- * Query 3 — Lending positions sorted by health factor (ascending = most at-risk first).
- */
 const AT_RISK_POSITIONS_QUERY = `
   query AtRiskPositions {
     lendingPositions(
@@ -76,9 +63,6 @@ const AT_RISK_POSITIONS_QUERY = `
   }
 `;
 
-/**
- * Query 4 — Protocol daily statistics for the last 30 days.
- */
 const PROTOCOL_STATS_QUERY = `
   query ProtocolDailyStats {
     protocolDayDatas(orderBy: date, orderDirection: desc, first: 30) {
@@ -94,9 +78,6 @@ const PROTOCOL_STATS_QUERY = `
   }
 `;
 
-/**
- * Query 5 — Votes cast by a specific voter across all proposals.
- */
 const VOTER_HISTORY_QUERY = `
   query VoterHistory($voter: Bytes!) {
     votes(
@@ -116,9 +97,6 @@ const VOTER_HISTORY_QUERY = `
   }
 `;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Generic fetcher
-// ─────────────────────────────────────────────────────────────────────────────
 async function gqlFetch<T>(
   url: string,
   query: string,
@@ -134,10 +112,6 @@ async function gqlFetch<T>(
   if (json.errors?.length) throw new Error(json.errors[0].message);
   return json.data as T;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// React hooks
-// ─────────────────────────────────────────────────────────────────────────────
 
 function useSubgraphUrl(): string | null {
   const chainId = useChainId();
@@ -201,9 +175,6 @@ export function useVoterHistory(voter: string | undefined) {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────────────────
 export interface Proposal {
   id: string;
   proposer: string;

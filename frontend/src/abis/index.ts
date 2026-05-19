@@ -1,7 +1,5 @@
 import { parseAbi } from "viem";
 
-// Minimal ABIs generated from NatSpec / interface.
-
 const ERC20_ABI_ITEMS = [
   "function name() view returns (string)",
   "function symbol() view returns (string)",
