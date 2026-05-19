@@ -4,13 +4,13 @@ import {
   LiquidityRemoved,
   Swap as SwapEvent,
   Sync,
-} from "../../generated/AMM/AMM";
+} from "../generated/AMM/AMM";
 import {
   Pool,
   Swap,
   LiquidityEvent,
   ProtocolDayData,
-} from "../../generated/schema";
+} from "../generated/schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -63,8 +63,8 @@ function loadOrCreateDayData(timestamp: BigInt): ProtocolDayData {
 
 export function handleSync(event: Sync): void {
   let pool = loadOrCreatePool(event.address);
-  pool.reserveA = toDecimal(BigInt.fromI32(event.params.reserveA as i32));
-  pool.reserveB = toDecimal(BigInt.fromI32(event.params.reserveB as i32));
+  pool.reserveA = toDecimal(event.params.reserveA);
+  pool.reserveB = toDecimal(event.params.reserveB);
   pool.updatedAt = event.block.timestamp;
   pool.save();
 }

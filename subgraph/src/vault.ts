@@ -4,13 +4,13 @@ import {
   Deposit,
   Withdraw,
   YieldHarvested,
-} from "../../generated/YieldVault/YieldVault";
+} from "../generated/YieldVault/YieldVault";
 import {
   VaultDeposit,
   VaultWithdraw,
   YieldHarvest,
   ProtocolDayData,
-} from "../../generated/schema";
+} from "../generated/schema";
 
 const EIGHTEEN = BigDecimal.fromString("1000000000000000000");
 function toDecimal(raw: BigInt): BigDecimal {

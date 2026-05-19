@@ -5,7 +5,7 @@ import {
   Borrowed,
   Repaid,
   Liquidated,
-} from "../../generated/LendingPool/LendingPool";
+} from "../generated/LendingPool/LendingPool";
 import {
   LendingPosition,
   CollateralEvent,
@@ -13,7 +13,7 @@ import {
   RepayEvent,
   Liquidation,
   ProtocolDayData,
-} from "../../generated/schema";
+} from "../generated/schema";
 
 const EIGHTEEN = BigDecimal.fromString("1000000000000000000");
 

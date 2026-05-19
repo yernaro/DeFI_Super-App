@@ -5,8 +5,8 @@ import {
   ProposalQueued,
   ProposalExecuted,
   ProposalCanceled,
-} from "../../generated/DeFiGovernor/DeFiGovernor";
-import { Proposal, Vote, GovernanceStats } from "../../generated/schema";
+} from "../generated/DeFiGovernor/DeFiGovernor";
+import { Proposal, Vote, GovernanceStats } from "../generated/schema";
 
 const EIGHTEEN = BigDecimal.fromString("1000000000000000000");
 function toDecimal(raw: BigInt): BigDecimal {
