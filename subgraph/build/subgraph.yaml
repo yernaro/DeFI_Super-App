@@ -6,7 +6,7 @@ dataSources:
     name: AMM
     network: arbitrum-sepolia
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0x7856f87A661Bdb6FA2B11fc6232D56311D8d4C47"
       abi: AMM
       startBlock: 0
     mapping:
@@ -35,7 +35,7 @@ dataSources:
     name: LendingPool
     network: arbitrum-sepolia
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0x7285F770Ed861F22dCa4C7429FCe9B3b30407b96"
       abi: LendingPool
       startBlock: 0
     mapping:
@@ -65,7 +65,7 @@ dataSources:
     name: YieldVault
     network: arbitrum-sepolia
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0x0479722bF65A1fE9d4070263Da205f320eAf2c4a"
       abi: YieldVault
       startBlock: 0
     mapping:
@@ -91,7 +91,7 @@ dataSources:
     name: DeFiGovernor
     network: arbitrum-sepolia
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "0x9CF86FDC9B4D8b74F71cc3a815AaC9f5Ca758dD7"
       abi: DeFiGovernor
       startBlock: 0
     mapping:
