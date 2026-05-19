@@ -22,6 +22,7 @@ import {
   useRecentSwaps,
   useProtocolStats,
 } from "./hooks/useSubgraph";
+import { useRpcAnalytics } from "./hooks/useRpcAnalytics";
 import {
   useSwap,
   useAddLiquidity,
@@ -1129,6 +1130,153 @@ function AnalyticsPanel() {
           {(!data || data.protocolDayDatas.length === 0) && !isLoading && (
             <p style={{ color: "#6b7280", textAlign: "center" }}>
               No data indexed yet.
+            </p>
+          )}
+        </div>
+      </Card>
+      <RpcAnalyticsPanel />
+    </div>
+  );
+}
+
+function RpcAnalyticsPanel() {
+  const { data, isLoading, error, refetch } = useRpcAnalytics();
+  const swaps = data?.swaps ?? [];
+  const days = data?.protocolDayDatas ?? [];
+
+  return (
+    <div style={{ display: "grid", gap: 16 }}>
+      <Card title="Recent Swaps (from RPC)">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 8,
+          }}
+        >
+          <span style={{ color: "#6b7280", fontSize: 13 }}>
+            Reads contract events directly from Arbitrum Sepolia RPC.
+          </span>
+          <button onClick={() => refetch()} style={btnStyle("#6366f1")}>
+            Refresh
+          </button>
+        </div>
+        {isLoading && <p style={{ color: "#6b7280" }}>Loading from RPC...</p>}
+        {error && (
+          <ErrorBanner msg={parseError(error)} onClose={() => refetch()} />
+        )}
+        <div style={{ overflowX: "auto" }}>
+          <table
+            style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+          >
+            <thead>
+              <tr style={{ borderBottom: "2px solid #e5e7eb" }}>
+                {[
+                  "Sender",
+                  "Direction",
+                  "Amount In",
+                  "Amount Out",
+                  "Tx",
+                  "Time",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "4px 8px",
+                      textAlign: "left",
+                      color: "#6b7280",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {swaps.slice(0, 15).map((s) => (
+                <tr key={s.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                  <td style={{ padding: "4px 8px" }}>{shortAddr(s.sender)}</td>
+                  <td style={{ padding: "4px 8px" }}>{s.direction}</td>
+                  <td style={{ padding: "4px 8px" }}>
+                    {Number(s.amountIn).toFixed(4)}
+                  </td>
+                  <td style={{ padding: "4px 8px" }}>
+                    {Number(s.amountOut).toFixed(4)}
+                  </td>
+                  <td style={{ padding: "4px 8px" }}>{shortAddr(s.txHash)}</td>
+                  <td style={{ padding: "4px 8px" }}>
+                    {new Date(s.timestamp * 1000).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {swaps.length === 0 && !isLoading && !error && (
+            <p style={{ color: "#6b7280", textAlign: "center" }}>
+              No swap events found from RPC yet.
+            </p>
+          )}
+        </div>
+      </Card>
+
+      <Card title="Protocol Daily Stats (from RPC)">
+        {isLoading && <p style={{ color: "#6b7280" }}>Loading from RPC...</p>}
+        <div style={{ overflowX: "auto" }}>
+          <table
+            style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+          >
+            <thead>
+              <tr style={{ borderBottom: "2px solid #e5e7eb" }}>
+                {[
+                  "Date",
+                  "Vol TKA",
+                  "Vol TKB",
+                  "Swaps",
+                  "Liquidations",
+                  "Vault Deposits",
+                  "Yield Harvested",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "4px 8px",
+                      textAlign: "left",
+                      color: "#6b7280",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {days.map((d) => (
+                <tr key={d.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                  <td style={{ padding: "4px 8px" }}>
+                    {new Date(d.date * 86400 * 1000).toLocaleDateString()}
+                  </td>
+                  <td style={{ padding: "4px 8px" }}>
+                    {Number(d.dailyVolumeTKA).toFixed(4)}
+                  </td>
+                  <td style={{ padding: "4px 8px" }}>
+                    {Number(d.dailyVolumeTKB).toFixed(4)}
+                  </td>
+                  <td style={{ padding: "4px 8px" }}>{d.dailySwaps}</td>
+                  <td style={{ padding: "4px 8px" }}>{d.dailyLiquidations}</td>
+                  <td style={{ padding: "4px 8px" }}>
+                    {Number(d.dailyVaultDeposits).toFixed(4)}
+                  </td>
+                  <td style={{ padding: "4px 8px" }}>
+                    {Number(d.dailyYieldHarvested).toFixed(4)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {days.length === 0 && !isLoading && !error && (
+            <p style={{ color: "#6b7280", textAlign: "center" }}>
+              No protocol events found from RPC yet.
             </p>
           )}
         </div>
